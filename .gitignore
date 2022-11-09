@@ -1,0 +1,5 @@
+# Build files
+/build/
+
+# Files used for autocomplete in text editors
+compile_commands.json
