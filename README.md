@@ -6,8 +6,10 @@ You can play against the computer, play with another person on the same computer
 
 Building
 --------
+
 Issue the following commands to build and run the application:
-	mkdir build && cd build
-	cmake -DCMAKE_BUILD_TYPE=Debug ..
-	make
-	bin/checkers_run
+
+    mkdir build && cd build
+    cmake -DCMAKE_BUILD_TYPE=Debug ..
+    make -j$(nproc)
+    bin/checkers_run
