@@ -2,42 +2,44 @@
 #define TUI_H
 
 
-class Game;
-class Engine;
+#include "game/game.h"
+#include "engine/engine.h"
+
+#include <vector>
+#include <string>
+
 class Move;
 enum class Turn;
 enum class MatchType;
 
-#include <vector>
-#include <string>
-#include <iosfwd>
-
 
 class Tui {
 public:
-	Tui() = delete;
-	
-	static void printIntro();
-	static MatchType askForMatchType();
-	static void printMatchType(const Game &game);
-	static void printGameState(const Game &game);
-	static void doNextMove(Game *game, Engine *engine);
-	static bool askToPlayAgain();
-	static void printOutro();
-	
+	void run();
+
 private:
-	static void printBoard(const Game &game);
-	static void printTurn(const Game &game);
-	static void printMovesAvailable(const Game &game);
-	static Move askForMove(const std::vector<Move> &moves);
-	static Move getComputerMove(const Game &game, Engine *engine);
-	static void printMoveMade(Turn turn, const Move &move);
-	static void printWinner(const Game &game);
-	static std::string getMoveString(const Move &move);
-	
-	static std::vector<int> parseMoveString(const std::string &input);
-	static Move findMatchingMove(const std::vector<int> &indexes, const std::vector<Move> &moves);
+	void printIntro() const;
+	MatchType askForMatchType() const;
+	void printMatchType() const;
+	void printGameState() const;
+	void doNextMove();
+	bool askToPlayAgain() const;
+	void printOutro() const;
+	void printBoard() const;
+	void printTurn() const;
+	void printMovesAvailable() const;
+	Move askForMove() const;
+	Move getComputerMove();
+	void printMoveMade(Turn turn, const Move& move) const;
+	void printWinner() const;
+
+	static std::string getMoveString(const Move& move);
+	static std::vector<int> parseMoveString(const std::string& input);
+	static const Move* findMatchingMove(const std::vector<int>& position_indexes, const std::vector<Move>& moves_available);
+
+	Game m_game;
+	Engine m_engine;
 };
 
 
-#endif
+#endif // TUI_H

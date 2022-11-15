@@ -6,24 +6,51 @@
 #include "game/turn.h"
 #include "game/player.h"
 #include "game/matchtype.h"
+#include "game/coord.h"
 
+#include <iostream>
 #include <cassert>
 #include <iomanip> // for number padding
 #include <algorithm> // for std::min
-#include <iostream>
 
 
-// welcomes the user to the game
-// an extra new line is printed afterwards
-void Tui::printIntro() {
+/**
+ * Runs the game with a text user interface.
+ */
+void Tui::run() {
+	printIntro();
+	
+	do {
+		m_game.newGame(askForMatchType());
+		printMatchType();
+		
+		while (!m_game.isOver()) {
+			printGameState();
+			doNextMove();
+		}
+		
+		printGameState();
+	} while (askToPlayAgain());
+	
+	printOutro();
+}
+
+
+/**
+ * Prints a welcome message.
+ */
+void Tui::printIntro() const {
 	std::cout << "Welcome to the Checkers/Draughts game!\n";
 	std::cout << '\n';
 }
 
 
-// asks user what type of game they want to play and returns the appropriate match type
-// options are human vs human, human vs computer, computer vs human, computer vs computer
-MatchType Tui::askForMatchType() {
+/**
+ * Asks the user what match type they want this game to be.
+ * Eg. Human vs Computer, Human vs Human, etc...
+ * @return The match type the user chose.
+ */
+MatchType Tui::askForMatchType() const {
 	std::cout << "Please choose between the following match types:\n";
 	std::cout << "\t(1) Human vs Human\n";
 	std::cout << "\t(2) Human vs Computer\n";
@@ -46,16 +73,18 @@ MatchType Tui::askForMatchType() {
 			return MatchType::COMPUTER_VS_COMPUTER;
 		}
 	}
+
 }
 
 
-// prints the player type of each player in the game eg. human or computer
-// an extra new line is printed afterwards
-void Tui::printMatchType(const Game &game) {
+/**
+ * Prints the match type of the game.
+ */
+void Tui::printMatchType() const {
 	std::cout << "Match type: ";
 	
 	for (Turn turn : {Turn::BLACK, Turn::WHITE}) {
-		if (game.getPlayerType(turn) == Player::HUMAN) {
+		if (m_game.getPlayerType(turn) == Player::HUMAN) {
 			std::cout << "Human";
 		} else {
 			std::cout << "Computer";
@@ -71,38 +100,41 @@ void Tui::printMatchType(const Game &game) {
 }
 
 
-// if the game is not over, the board, turn and moves available are printed
-// otherwise the board and winner of the game is printed
-// an extra new line is printed afterwards
-void Tui::printGameState(const Game &game) {
-	printBoard(game);
-	if (!game.isOver()) {
-		printTurn(game);
-		printMovesAvailable(game);
+/**
+ * Prints the current game state.
+ * This includes the board, turn and moves available.
+ * If the game is over, only the board is printed and the winner is announced.
+ */
+void Tui::printGameState() const {
+	printBoard();
+	if (!m_game.isOver()) {
+		printTurn();
+		printMovesAvailable();
 	} else {
 		std::cout << '\n';
-		printWinner(game);
+		printWinner();
 	}
 	
 	std::cout << '\n';
 }
 
 
-// gets the next move, prints the move, and then does the move
-// the move is got from the user or engine depending on the current player type
-// an extra new line is printed afterwards
-void Tui::doNextMove(Game *game, Engine *engine) {
+/**
+ * Handles doing the next move.
+ * The move is first queried (either from the user or engine) and then executed.
+ */
+void Tui::doNextMove() {
 	Move move;
 	
-	if (game->getPlayerType(game->getTurn()) == Player::HUMAN) {
-		move = askForMove(game->getAvailableMoves());
+	if (m_game.getPlayerType(m_game.getTurn()) == Player::HUMAN) {
+		move = askForMove();
 	} else {
-		move = getComputerMove(*game, engine);
+		move = getComputerMove();
 	}
 	
-	printMoveMade(game->getTurn(), move);
+	printMoveMade(m_game.getTurn(), move);
 	
-	bool move_successful = game->doMove(move);
+	bool move_successful = m_game.doMove(move);
 	
 	assert(move_successful);
 	
@@ -110,9 +142,11 @@ void Tui::doNextMove(Game *game, Engine *engine) {
 }
 
 
-// asks user if they want to play again and returns true if they do
-// an extra new line is printed afterwards
-bool Tui::askToPlayAgain() {
+/**
+ * Asks the user if they want to play again.
+ * @return True if they want to play again, false otherwise.
+ */
+bool Tui::askToPlayAgain() const {
 	while (true) {
 		std::cout << "Would you like to play again? ";
 		std::string input;
@@ -130,18 +164,24 @@ bool Tui::askToPlayAgain() {
 }
 
 
-// thanks the user for playing
-void Tui::printOutro() {
+/**
+ * Thanks the user for playing.
+ */
+void Tui::printOutro() const {
 	std::cout << "Thanks for playing!\n";
 }
 
 
-void Tui::printBoard(const Game &game) { // TODO: update to make use of new utility functions like coord.isValid()
-	char old_fill_character = std::cout.fill('0'); // set fill character to '0' and remember old one
+/**
+ * Prints the board out in an ASCII representation.
+ * Note that the board will be rotated if it is a computer vs human game.
+ */
+void Tui::printBoard() const {
+	const char previous_fill_character = std::cout.fill('0'); // set fill character to '0' and remember old one
 	
 	std::cout << "     -----------------     \n";
 	
-	bool counting_upwards = game.getMatchType() == MatchType::COMPUTER_VS_HUMAN ? true : false;
+	const bool counting_upwards = (m_game.getMatchType() == MatchType::COMPUTER_VS_HUMAN);
 	
 	int index = counting_upwards ? 0 : 31;
 	
@@ -153,8 +193,8 @@ void Tui::printBoard(const Game &game) { // TODO: update to make use of new util
 		for (int x = 0; x < 8; x++) {
 			char symbol;
 			
-			if ((x + y) % 2 == 1) { // is valid square
-				Piece piece = game.getBoard().pieceAt(index);
+			if (Coord(x, y).isValid()) {
+				Piece piece = m_game.getBoard().pieceAt(index);
 				
 				if (piece.belongsTo(Turn::BLACK)) {
 					symbol = piece.isCrowned() ? 'B' : 'b';
@@ -166,7 +206,7 @@ void Tui::printBoard(const Game &game) { // TODO: update to make use of new util
 				
 				last_index = index;
 				index += counting_upwards ? 1 : -1;
-			} else { // is invalid square
+			} else { // invalid square
 				symbol = ' ';
 			}
 			
@@ -178,19 +218,30 @@ void Tui::printBoard(const Game &game) { // TODO: update to make use of new util
 
 	std::cout << "     -----------------     \n";
 	
-	std::cout.fill(old_fill_character); // reset fill character
+	std::cout.fill(previous_fill_character); // reset fill character
 }
 
 
-void Tui::printTurn(const Game &game) {
-	std::cout << "It is " << (game.getTurn() == Turn::BLACK ? "black" : "white") << "'s turn to move.\n";
+/**
+ * Prints whose turn it is.
+ */
+void Tui::printTurn() const {
+	std::cout << "It is " << (m_game.getTurn() == Turn::BLACK ? "black" : "white") << "'s turn to move.\n";
 }
 
 
-void Tui::printMovesAvailable(const Game &game) {
+/**
+ * Prints a list of the moves available.
+ */
+void Tui::printMovesAvailable() const {
+	const std::vector<Move> &moves = m_game.getAvailableMoves();
+
+	if (moves.size() == 0) {
+		std::cout << "There are no moves available.\n";
+		return;
+	}
+
 	std::cout << "Moves available: ";
-	
-	const std::vector<Move> &moves = game.getAvailableMoves();
 	
 	for (int move_index = 0; move_index < static_cast<int>(moves.size()); move_index++) {
 		if (move_index > 0) {
@@ -204,9 +255,11 @@ void Tui::printMovesAvailable(const Game &game) {
 }
 
 
-// asks the user to enter a move and verifies that it is in the moves list
-// returns a copy of the move chosen from the moves list
-Move Tui::askForMove(const std::vector<Move> &moves) {
+/**
+ * Asks the user to enter a move to do and verifies that it is valid.
+ * @return The move chosen. It will always be one of the currently available moves.
+ */
+Move Tui::askForMove() const {
 	while (true) {
 		std::cout << "Please enter the move to do: ";
 		std::string input;
@@ -214,41 +267,55 @@ Move Tui::askForMove(const std::vector<Move> &moves) {
 		
 		std::vector<int> given_indexes = parseMoveString(input);
 		
-		Move matching_move = findMatchingMove(given_indexes, moves);
+		const Move *matching_move = findMatchingMove(given_indexes, m_game.getAvailableMoves());
 		
-		if (matching_move.exists()) {
-			return matching_move;
+		if (matching_move != nullptr) {
+			return *matching_move;
 		}
 	}
 }
 
 
-// display a message saying that the computer is thinking
-// query the engine for the best move and return the move chosen
-Move Tui::getComputerMove(const Game &game, Engine *engine) {
+/**
+ * Gets the computer player to chose the move it wants to do.
+ * A thinking message is displayed to the user while the computer is thinking.
+ * @return The move that the computer chose.
+ */
+Move Tui::getComputerMove() {
 	std::cout << "The computer is thinking...";
 	std::cout.flush();
-	assert(engine);
-	Move move = engine->findBestMove(game);
+	Move move = m_engine.findBestMove(m_game);
 	std::cout << '\n';
 	return move;
 }
 
 
-// print the action of making a move by the player whose turn it is
-void Tui::printMoveMade(Turn turn, const Move &move) {
+/**
+ * Prints the move made.
+ * @param turn Whose turn it was when the move was made.
+ * @param move The move that was made.
+ */
+void Tui::printMoveMade(Turn turn, const Move& move) const {
 	std::cout << (turn == Turn::BLACK ? "Black" : "White") << " makes the move " << getMoveString(move) << '\n';
 }
 
 
-void Tui::printWinner(const Game &game) {
-	assert(game.isOver());
-	std::cout << (game.getTurn() == Turn::WHITE ? "Black" : "White") << " wins!\n";
+/**
+ * Prints the winner of the game.
+ * Should only be called when the game is over.
+ */
+void Tui::printWinner() const {
+	assert(m_game.isOver());
+	std::cout << (m_game.getTurn() == Turn::WHITE ? "Black" : "White") << " wins!\n";
 }
 
 
-// constructs a string representing the move and returns it
-std::string Tui::getMoveString(const Move &move) {
+/**
+ * Returns a string representation of the given move.
+ * @param The move.
+ * @return A string representation of the move.
+ */
+std::string Tui::getMoveString(const Move& move) {
 	std::string output;
 
 	for (int i = 0; i < move.getLength(); i++) {
@@ -263,18 +330,20 @@ std::string Tui::getMoveString(const Move &move) {
 }
 
 
-// parses input which is a string with numbers separated by non-digit characters
-// returns list of numbers representing the indexes of the positions making up the move
-// note that returned values are the indexes of the positions and not their display values
-// note that numbers in the input that are invalid positions will have an invalid index in the output
-// ie. the function returns a list of numbers in input, subtracting one from each
-std::vector<int> Tui::parseMoveString(const std::string &input) {
+/**
+ * Parses the given move string into a list of position index integers.
+ * All characters that aren't numbers are considered separators.
+ * Large numbers are capped at 32 (signifying an invalid index) to avoid overflow.
+ * @param input The move string to be parsed.
+ * @return A list of position indexes.
+ */
+std::vector<int> Tui::parseMoveString(const std::string& input) {
 	std::vector<int> indexes;
 	
 	int number = 0;
 	bool last_character_was_number = false;
 	
-	for (int i = 0; i <= static_cast<int>(input.length()); i++) {
+	for (size_t i = 0; i <= input.length(); i++) {
 		if (input[i] >= '0' && input[i] <= '9') {
 			number = std::min(number * 10 + input[i] - '0', 33);
 			last_character_was_number = true;
@@ -289,27 +358,32 @@ std::vector<int> Tui::parseMoveString(const std::string &input) {
 }
 
 
-// finds the move that is represented by indexes in moves list and returns a copy of it
-// the indexes list may skip over some positions as long as the move it represents is unambiguous
-// if a match is not found or there are multiple matches then an empty move is returned
-Move Tui::findMatchingMove(const std::vector<int> &indexes, const std::vector<Move> &moves) {
-	if (indexes.empty()) {
-		return {};
+/**
+ * Attempts to find the move that is being represented by the list of indexes given.
+ * @param position_indexes The list of position indexes that make up the move.
+ * Note that this list can contain just a subset of the positions of the move it represents,
+ * as long as it is not ambiguous what move it is representing.
+ * @param moves_available The list of moves that we can choose from.
+ * @return A pointer to the move that was matched, or nullptr if no match could be made.
+ */
+const Move* Tui::findMatchingMove(const std::vector<int>& position_indexes, const std::vector<Move>& moves_available) {
+	if (position_indexes.empty()) {
+		return nullptr;
 	}
 	
-	Move matching_move;
+	const Move *matching_move;
 	int matches_found = 0;
 	
-	for (const Move &move : moves) { // test each move for match
+	for (const Move &move : moves_available) { // test each move for match
 		int indexes_position = 0;
 		for (int moves_position = 0; moves_position < move.getLength(); moves_position++) {
-			if (move.getPosition(moves_position) == indexes[indexes_position]) {
+			if (move.getPosition(moves_position) == position_indexes[indexes_position]) {
 				indexes_position++;
-				if (indexes_position == static_cast<int>(indexes.size())) { // found match
-					if (static_cast<int>(indexes.size()) == move.getLength()) { // found exact match
-						return move;
+				if (indexes_position == static_cast<int>(position_indexes.size())) { // found match
+					if (static_cast<int>(position_indexes.size()) == move.getLength()) { // found exact match
+						return &move;
 					} // found partial match
-					matching_move = move;
+					matching_move = &move;
 					matches_found++;
 					break;
 				}
@@ -320,6 +394,6 @@ Move Tui::findMatchingMove(const std::vector<int> &indexes, const std::vector<Mo
 	if (matches_found == 1) {
 		return matching_move;
 	} else {
-		return {};
+		return nullptr;
 	}
 }
