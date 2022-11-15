@@ -295,7 +295,7 @@ Move Tui::getComputerMove() {
  * @param turn Whose turn it was when the move was made.
  * @param move The move that was made.
  */
-void Tui::printMoveMade(Turn turn, const Move& move) const {
+void Tui::printMoveMade(Turn turn, const Move &move) const {
 	std::cout << (turn == Turn::BLACK ? "Black" : "White") << " makes the move " << getMoveString(move) << '\n';
 }
 
@@ -315,7 +315,7 @@ void Tui::printWinner() const {
  * @param The move.
  * @return A string representation of the move.
  */
-std::string Tui::getMoveString(const Move& move) {
+std::string Tui::getMoveString(const Move &move) {
 	std::string output;
 
 	for (int i = 0; i < move.getLength(); i++) {
@@ -337,7 +337,7 @@ std::string Tui::getMoveString(const Move& move) {
  * @param input The move string to be parsed.
  * @return A list of position indexes.
  */
-std::vector<int> Tui::parseMoveString(const std::string& input) {
+std::vector<int> Tui::parseMoveString(const std::string &input) {
 	std::vector<int> indexes;
 	
 	int number = 0;
@@ -366,7 +366,7 @@ std::vector<int> Tui::parseMoveString(const std::string& input) {
  * @param moves_available The list of moves that we can choose from.
  * @return A pointer to the move that was matched, or nullptr if no match could be made.
  */
-const Move* Tui::findMatchingMove(const std::vector<int>& position_indexes, const std::vector<Move>& moves_available) {
+const Move* Tui::findMatchingMove(const std::vector<int> &position_indexes, const std::vector<Move> &moves_available) {
 	if (position_indexes.empty()) {
 		return nullptr;
 	}

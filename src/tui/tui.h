@@ -30,12 +30,12 @@ private:
 	void printMovesAvailable() const;
 	Move askForMove() const;
 	Move getComputerMove();
-	void printMoveMade(Turn turn, const Move& move) const;
+	void printMoveMade(Turn turn, const Move &move) const;
 	void printWinner() const;
 
-	static std::string getMoveString(const Move& move);
-	static std::vector<int> parseMoveString(const std::string& input);
-	static const Move* findMatchingMove(const std::vector<int>& position_indexes, const std::vector<Move>& moves_available);
+	static std::string getMoveString(const Move &move);
+	static std::vector<int> parseMoveString(const std::string &input);
+	static const Move* findMatchingMove(const std::vector<int> &position_indexes, const std::vector<Move> &moves_available);
 
 	Game m_game;
 	Engine m_engine;
