@@ -18,7 +18,7 @@ Bitboard convertBoardToBitboard(const Board &board) {
 		Piece piece = board.pieceAt(position);
 
 		if (piece.exists()) {
-			U32 mask = 1u << position;
+			u32 mask = 1u << position;
 
 			if (piece.belongsTo(Turn::BLACK)) {
 				bitboard.black_pieces |= mask;

@@ -5,13 +5,13 @@
 #include <cstdint>
 
 
-using U32 = std::uint32_t;
+using u32 = std::uint32_t;
 
 
 struct Bitboard {
-	U32 black_pieces;
-	U32 white_pieces;
-	U32 king_pieces;
+	u32 black_pieces;
+	u32 white_pieces;
+	u32 king_pieces;
 };
 
 
