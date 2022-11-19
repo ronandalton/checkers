@@ -15,10 +15,13 @@
 
 using move_t = uint32_t;
 
-
 constexpr int MOVE_TYPE_START_POS_SHIFT = 0;
 constexpr int MOVE_TYPE_NUM_JUMPS_SHIFT = 5;
 constexpr int MOVE_TYPE_DIRECTION_LIST_SHIFT = 9;
+
+constexpr int MOVE_TYPE_START_POS_WIDTH = 5;
+constexpr int MOVE_TYPE_NUM_JUMPS_WIDTH = 4;
+constexpr int MOVE_TYPE_DIRECTION_LIST_ITEM_WIDTH = 2;
 
 
 #endif // MOVE_TYPE_H
