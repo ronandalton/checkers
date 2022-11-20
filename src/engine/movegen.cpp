@@ -67,6 +67,44 @@ static uint32_t getBitPosition(uint32_t value) {
 }
 
 
+// modifies board in place to apply the specified move
+// piece_position should have a single bit set corresponding to which piece should be moved
+// this function assumes we are given a valid move
+static void makeMove(Bitboard *board, u32 piece_position, int direction, bool is_jump) {
+	const bool is_whites_turn = board->white_pieces & piece_position;
+	const bool was_king_before_move = piece_position & board->king_pieces;
+	const u32 my_crown_row = is_whites_turn ? white_crown_row : black_crown_row;
+	u32 &my_pieces = is_whites_turn ? board->white_pieces : board->black_pieces;
+	u32 &their_pieces = is_whites_turn ? board->black_pieces : board->white_pieces;
+	u32 &king_pieces = board->king_pieces;
+
+	// delete piece from starting position
+	my_pieces &= ~piece_position;
+	king_pieces &= ~piece_position;
+
+	u32 adjacent_position = signedBitshift(piece_position,
+		piece_position & even_row ? -even_shift[direction] : -odd_shift[direction]);
+
+	u32 new_piece_position;
+	if (!is_jump) {
+		new_piece_position = adjacent_position;
+	} else {
+		new_piece_position = signedBitshift(piece_position, -jump_shift[direction]);
+
+		// we also need to remove the piece that was jumped
+		their_pieces &= ~adjacent_position;
+		king_pieces &= ~adjacent_position;
+	}
+	my_pieces |= new_piece_position;
+
+	// apply the correct crown state of the piece moved
+	bool entered_crown_row = new_piece_position & my_crown_row;
+	if (was_king_before_move || entered_crown_row) {
+		king_pieces |= new_piece_position;
+	} // assume no phantom king on empty square, so no need to clear bit if not king
+}
+
+
 static int findDoubleJumps(const Bitboard &board, const u32 current_position, move_t partial_move, Bitboard *next_positions, move_t *moves) {
 	int current_num_jumps = (partial_move >> MOVE_TYPE_NUM_JUMPS_SHIFT) & ((1u << MOVE_TYPE_NUM_JUMPS_WIDTH) - 1);
 	bool is_whites_turn = board.white_pieces & current_position;
