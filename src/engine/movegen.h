@@ -2,11 +2,10 @@
 #define MOVEGEN_H
 
 
-#include "engine/move_type.h"
 #include "engine/bitboard.h"
 
 
-int generateMoves(const Bitboard &board, bool is_whites_turn, Bitboard *next_positions, move_t *moves);
+int generateMoves(const Bitboard &board, bool is_whites_turn, Bitboard *next_positions);
 
 
 #endif // MOVEGEN_H
