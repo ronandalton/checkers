@@ -105,6 +105,39 @@ static void makeMove(Bitboard *board, u32 piece_position, int direction, bool is
 }
 
 
+// piece_position should have a single bit set corresponding to which piece we are testing
+static bool jumpIsLegal(const Bitboard &board, u32 piece_position, int direction) {
+	bool is_whites_turn = board.white_pieces & piece_position;
+	bool is_a_king = board.king_pieces & piece_position;
+
+	bool moving_forwards = (is_whites_turn == (direction < NUM_DIRECTIONS / 2));
+	if (!is_a_king && !moving_forwards) {
+		return false; // non kings cannot move backwards
+	}
+
+	if (!(piece_position & jump_mask[direction])) {
+		return false; // jumping would put the piece out of bounds
+	}
+
+	u32 adjacent_position = signedBitshift(piece_position,
+		piece_position & even_row ? -even_shift[direction] : -odd_shift[direction]);
+	u32 their_pieces = is_whites_turn ? board.black_pieces : board.white_pieces;
+
+	if (!(their_pieces & adjacent_position)) {
+		return false; // one of their pieces isn't adjacent
+	}
+
+	u32 new_piece_position = signedBitshift(piece_position, -jump_shift[direction]);
+	u32 empty_squares = ~(board.black_pieces | board.white_pieces);
+
+	if (!(empty_squares & new_piece_position)) {
+		return false; // the square we want to jump to isn't vacant
+	}
+
+	return true;
+}
+
+
 static int findDoubleJumps(const Bitboard &board, const u32 current_position, move_t partial_move, Bitboard *next_positions, move_t *moves) {
 	int current_num_jumps = (partial_move >> MOVE_TYPE_NUM_JUMPS_SHIFT) & ((1u << MOVE_TYPE_NUM_JUMPS_WIDTH) - 1);
 	bool is_whites_turn = board.white_pieces & current_position;
