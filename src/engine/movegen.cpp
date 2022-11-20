@@ -49,30 +49,13 @@ static uint32_t signedBitshift(uint32_t bits, int shift) {
 }
 
 
-// returns the least significant bit of bits
-static uint32_t lsb(uint32_t bits) {
-	return bits & -bits; // two's complement bit twiddling trick
-} // TODO: remove if unused
-
-
-// returns the position of the bit set in value
-// eg. 00000100 -> 2
-// input must have a single bit set
-static uint32_t getBitPosition(uint32_t value) {
-	uint32_t position = 0;
-	while (value >>= 1) {
-		position++;
-	}
-	return position;
-}
-
-
 // modifies board in place to apply the specified move
 // piece_position should have a single bit set corresponding to which piece should be moved
 // this function assumes we are given a valid move
-static void makeMove(Bitboard *board, u32 piece_position, int direction, bool is_jump) {
+// returns the new piece position
+static u32 makeMove(Bitboard *board, u32 piece_position, int direction, bool is_jump) {
 	const bool is_whites_turn = board->white_pieces & piece_position;
-	const bool was_king_before_move = piece_position & board->king_pieces;
+	const bool was_a_king_before_move = piece_position & board->king_pieces;
 	const u32 my_crown_row = is_whites_turn ? white_crown_row : black_crown_row;
 	u32 &my_pieces = is_whites_turn ? board->white_pieces : board->black_pieces;
 	u32 &their_pieces = is_whites_turn ? board->black_pieces : board->white_pieces;
@@ -99,9 +82,11 @@ static void makeMove(Bitboard *board, u32 piece_position, int direction, bool is
 
 	// apply the correct crown state of the piece moved
 	bool entered_crown_row = new_piece_position & my_crown_row;
-	if (was_king_before_move || entered_crown_row) {
+	if (was_a_king_before_move || entered_crown_row) {
 		king_pieces |= new_piece_position;
 	} // assume no phantom king on empty square, so no need to clear bit if not king
+
+	return new_piece_position;
 }
 
 
@@ -138,79 +123,47 @@ static bool jumpIsLegal(const Bitboard &board, u32 piece_position, int direction
 }
 
 
-static int findDoubleJumps(const Bitboard &board, const u32 current_position, move_t partial_move, Bitboard *next_positions, move_t *moves) {
-	int current_num_jumps = (partial_move >> MOVE_TYPE_NUM_JUMPS_SHIFT) & ((1u << MOVE_TYPE_NUM_JUMPS_WIDTH) - 1);
-	bool is_whites_turn = board.white_pieces & current_position;
-	bool is_king = board.king_pieces & current_position;
-	const u32 my_pieces = is_whites_turn ? board.white_pieces : board.black_pieces;
-	const u32 their_pieces = is_whites_turn ? board.black_pieces : board.white_pieces;
-	const u32 king_pieces = board.king_pieces;
-	const u32 empty_squares = ~(board.black_pieces | board.white_pieces);
-	const u32 my_crown_row = is_whites_turn ? white_crown_row : black_crown_row;
+// populates the list pointed to by next_positions recursively
+// returns number of moves found
+static int findDoubleJumps(const Bitboard &board, const u32 piece_position, Bitboard *next_positions) {
+	int moves_found = 0;
 
-	// try jumping in each legal direction
+	// try jumping in each direction
 	for (int direction = 0; direction < NUM_DIRECTIONS; direction++) {
-		if (!is_king && (is_whites_turn != (direction < NUM_DIRECTIONS / 2))) {
-			continue; // non kings cannot move backwards
+		if (jumpIsLegal(board, piece_position, direction)) {
+			Bitboard new_board = board;
+
+			u32 new_piece_position = makeMove(&new_board, piece_position, direction, true);
+
+			bool was_a_king_before_move = piece_position & board.king_pieces;
+			bool is_a_king_now = new_piece_position & new_board.king_pieces;
+			bool piece_was_crowned = !was_a_king_before_move && is_a_king_now;
+
+			if (!piece_was_crowned) {
+				moves_found += findDoubleJumps(new_board, new_piece_position, next_positions + moves_found);
+			} else {
+				next_positions[moves_found++] = new_board;
+			}
+
 		}
-
-		if (!(current_position & jump_mask[direction])) {
-			continue; // jumping would put the piece out of bounds
-		}
-
-		u32 jumped_piece_position = signedBitshift(current_position,
-			current_position & even_row ? -even_shift[direction] : -odd_shift[direction]);
-
-		if (!(their_pieces & jumped_piece_position)) {
-			continue; // one of their pieces isn't adjacent
-		}
-
-		u32 new_piece_position = signedBitshift(current_position, -jump_shift[direction]);
-
-		if (!(empty_squares & new_piece_position)) {
-			continue; // the square we're jumping to isn't vacant
-		}
-
-		// a jump in this direction is legal
-
-		move_t new_partial_move = partial_move;
-		// add new direction to end of move directions list
-		new_partial_move |= direction << (MOVE_TYPE_DIRECTION_LIST_SHIFT + current_num_jumps * MOVE_TYPE_DIRECTION_LIST_ITEM_WIDTH);
-		 // increment num_jumps field in move
-		new_partial_move += 1u << MOVE_TYPE_NUM_JUMPS_SHIFT;
-
-		// create copy of board to operate on
-		u32 my_new_pieces = my_pieces;
-		u32 their_new_pieces = their_pieces;
-		u32 new_king_pieces = king_pieces;
-
-		// make the move
-		my_new_pieces &= ~current_position; // delete piece from start position
-		new_king_pieces &= ~current_position; // clear king state
-		my_new_pieces |= new_piece_position;
-		// make the new piece a king if it was before or it reached the crown row
-		if ((current_position & king_pieces) || (new_piece_position & my_crown_row)) {
-			new_king_pieces |= new_piece_position;
-		} // assume no phantom king on empty square so no need to clear bit
-		their_new_pieces &= ~jumped_piece_position; // remove jumped piece
-		new_king_pieces &= ~jumped_piece_position; // clear king state
-
-		// TODO: recursively find jump paths
 	}
+
+	if (!moves_found) {
+		next_positions[moves_found++] = board;
+	}
+
+	return moves_found;
 }
 
 
 // returns number of moves found
-// next_positions and moves are output parameters pointing to arrays
-// either may be null if that type of output is not needed
-// assumes output arrays pointed to are large enough to hold result
-int generateMoves(const Bitboard &board, bool is_whites_turn, Bitboard *next_positions, move_t *moves) {
+// next_positions is an out parameters pointing to an array to populate
+// assumes array is large enough to hold result
+int generateMoves(const Bitboard &board, bool is_whites_turn, Bitboard *next_positions) {
 	// get piece types from perspective of player to move
 	const u32 my_pieces = is_whites_turn ? board.white_pieces : board.black_pieces;
 	const u32 their_pieces = is_whites_turn ? board.black_pieces : board.white_pieces;
-	const u32 king_pieces = board.king_pieces;
 	const u32 empty_squares = ~(my_pieces | their_pieces);
-	const u32 my_crown_row = is_whites_turn ? white_crown_row : black_crown_row;
 	
 	u32 movables[NUM_DIRECTIONS];
 	bool found_moves = false;
@@ -220,7 +173,7 @@ int generateMoves(const Bitboard &board, bool is_whites_turn, Bitboard *next_pos
 		for (int direction = 0; direction < NUM_DIRECTIONS; direction++) {
 			movables[direction] = my_pieces; // only my pieces can move
 			if (is_whites_turn != (direction < NUM_DIRECTIONS / 2)) { // checking for moves in backwards direction
-				movables[direction] &= king_pieces; // only kings can go this way
+				movables[direction] &= board.king_pieces; // only kings can go this way
 				if (!movables[direction]) {
 					continue;
 				}
@@ -254,79 +207,22 @@ int generateMoves(const Bitboard &board, bool is_whites_turn, Bitboard *next_pos
 		u32 movable = movables[direction];
 		// process each movable piece in this direction
 		while (movable) {
-			const u32 piece = movable & (~movable + 1); // get least significant bit of movable
+			const u32 piece_position = movable & (~movable + 1); // get least significant bit of movable
 
-			if (is_jumping_move) {
-				// check for double jump
-				// TODO
+			Bitboard new_board = board;
+
+			u32 new_piece_position = makeMove(&new_board, piece_position, direction, is_jumping_move);
+
+			bool was_a_king_before_move = piece_position & board.king_pieces;
+			bool is_a_king_now = new_piece_position & new_board.king_pieces;
+			bool piece_was_crowned = !was_a_king_before_move && is_a_king_now;
+
+			if (is_jumping_move && !piece_was_crowned) {
+				moves_found += findDoubleJumps(new_board, new_piece_position, next_positions + moves_found);
+			} else {
+				next_positions[moves_found++] = new_board;
 			}
 
-			// calculate board state after this move (if needed)
-			if (next_positions != nullptr) {
-				// create copy of board to operate on
-				u32 my_new_pieces = my_pieces;
-				u32 their_new_pieces = their_pieces;
-				u32 new_king_pieces = king_pieces;
-
-				// delete piece from starting position
-				my_new_pieces &= ~piece;
-				new_king_pieces &= ~piece;
-
-				u32 adjacent_position = signedBitshift(piece,
-					piece & even_row ? -even_shift[direction] : -odd_shift[direction]);
-				u32 new_piece_position;
-				if (is_jumping_move) {
-					// remove jumped piece
-					their_new_pieces &= ~adjacent_position;
-					new_king_pieces &= ~adjacent_position;
-
-					// add piece at landing position
-					new_piece_position = signedBitshift(piece, -jump_shift[direction]);
-					my_new_pieces |= new_piece_position;
-				} else { // normal move
-					new_piece_position = adjacent_position;
-					my_new_pieces |= new_piece_position;
-				}
-				// make the new piece a king if it was before or if it reached the crown row
-				if ((piece & king_pieces) || (new_piece_position & my_crown_row)) {
-					new_king_pieces |= new_piece_position;
-				} // assume no phantom king on empty square so no need to clear bit
-
-				// store move
-				Bitboard new_board;
-				if (is_whites_turn) {
-					new_board.black_pieces = their_new_pieces;
-					new_board.white_pieces = my_new_pieces;
-				} else {
-					new_board.black_pieces = my_new_pieces;
-					new_board.white_pieces = their_new_pieces;
-				}
-				new_board.king_pieces = new_king_pieces;
-
-				next_positions[moves_found] = new_board;
-			}
-
-			// store data needed to execute this move (if needed)
-			if (moves != nullptr) {
-				if (is_jumping_move) {
-					move_t move = 0;
-
-					// TODO: consider multi-jumps
-					move = getBitPosition(piece)
-						| (1 << MOVE_TYPE_NUM_JUMPS_SHIFT)
-						| (direction << MOVE_TYPE_DIRECTION_LIST_SHIFT);
-
-					moves[moves_found] = move;
-				} else { // normal move
-					move_t move = getBitPosition(piece)
-						// num_jumps set to zero implicitly
-						| (direction << MOVE_TYPE_DIRECTION_LIST_SHIFT);
-
-					moves[moves_found] = move;
-				}
-			}
-
-			moves_found++;
 			movable &= (movable - 1); // clear least significant bit of movable
 		}
 	}
