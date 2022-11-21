@@ -1,8 +1,6 @@
 set(
 	ENGINE_SOURCES
 		bitboard.h
-		convert.cpp
-		convert.h
 		engine.cpp
 		engine.h
 		movegen.cpp
