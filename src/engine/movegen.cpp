@@ -1,6 +1,6 @@
-#include "movegen.h"
+#include "engine/movegen.h"
 
-#include "bitboard.h"
+#include "engine/bitboard.h"
 
 
 // these masks stop moves near the edges of the board being made if
