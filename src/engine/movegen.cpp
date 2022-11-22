@@ -1,6 +1,7 @@
 #include "engine/movegen.h"
 
 #include "engine/bitboard.h"
+#include "engine/move.h"
 
 
 // these masks stop moves near the edges of the board being made if
@@ -45,6 +46,18 @@ static uint32_t signedBitshift(uint32_t bits, int shift) {
 	} else {
 		return bits >> -shift;
 	}
+}
+
+
+// returns the index of the most significant bit set in value
+// expects value to be non-zero
+// the lowest bit has index zero
+static int msbIndex(uint32_t value) {
+	int position = 0;
+	while (value >>= 1) {
+		position++;
+	}
+	return position;
 }
 
 
@@ -123,9 +136,12 @@ static bool jumpIsLegal(const Bitboard &board, u32 piece_position, int direction
 
 
 // populates the list pointed to by next_positions recursively
+// if moves is not a nullptr, it is populated with the moves found
 // returns number of moves found
-static int findDoubleJumps(const Bitboard &board, const u32 piece_position, Bitboard *next_positions) {
+static int findDoubleJumps(const Bitboard &board, const u32 piece_position, Bitboard *next_positions, Move *moves) {
 	int moves_found = 0;
+
+	const Move partial_move = moves != nullptr ? moves[0] : Move();
 
 	// try jumping in each direction
 	for (int direction = 0; direction < NUM_DIRECTIONS; direction++) {
@@ -139,16 +155,29 @@ static int findDoubleJumps(const Bitboard &board, const u32 piece_position, Bitb
 			bool piece_was_crowned = !was_a_king_before_move && is_a_king_now;
 
 			if (!piece_was_crowned) {
-				moves_found += findDoubleJumps(new_board, new_piece_position, next_positions + moves_found);
+				moves_found += findDoubleJumps(new_board, new_piece_position,
+					next_positions + moves_found, moves != nullptr ? moves + moves_found : nullptr);
 			} else {
-				next_positions[moves_found++] = new_board;
+				next_positions[moves_found] = new_board;
+
+				if (moves != nullptr) {
+					Move updated_move = partial_move;
+					updated_move.addJumpDirection(direction);
+					moves[moves_found] = updated_move;
+				}
+
+				moves_found++;
 			}
 
 		}
 	}
 
 	if (!moves_found) {
-		next_positions[moves_found++] = board;
+		next_positions[moves_found] = board;
+
+		// if moves != nullptr, partial move currently stored is actually the full move, so keep it there
+
+		moves_found++;
 	}
 
 	return moves_found;
@@ -156,9 +185,10 @@ static int findDoubleJumps(const Bitboard &board, const u32 piece_position, Bitb
 
 
 // returns number of moves found
-// next_positions is an out parameters pointing to an array to populate
-// assumes array is large enough to hold result
-int generateMoves(const Bitboard &board, bool is_whites_turn, Bitboard *next_positions) {
+// next_positions is an out parameter pointing to an array to populate
+// moves is an out parameter pointing to a moves list to populate (can be null if not needed)
+// assumes output arrays are large enough to hold result
+int generateMoves(const Bitboard &board, bool is_whites_turn, Bitboard *next_positions, Move *moves) {
 	// get piece types from perspective of player to move
 	const u32 my_pieces = is_whites_turn ? board.white_pieces : board.black_pieces;
 	const u32 their_pieces = is_whites_turn ? board.black_pieces : board.white_pieces;
@@ -217,9 +247,21 @@ int generateMoves(const Bitboard &board, bool is_whites_turn, Bitboard *next_pos
 			bool piece_was_crowned = !was_a_king_before_move && is_a_king_now;
 
 			if (is_jumping_move && !piece_was_crowned) {
-				moves_found += findDoubleJumps(new_board, new_piece_position, next_positions + moves_found);
+				if (moves != nullptr) {
+					// store partial move
+					moves[moves_found] = Move(msbIndex(piece_position), true, direction);
+				}
+				moves_found += findDoubleJumps(new_board, new_piece_position,
+					next_positions + moves_found, moves != nullptr ? moves + moves_found : nullptr);
 			} else {
-				next_positions[moves_found++] = new_board;
+				next_positions[moves_found] = new_board;
+
+				if (moves != nullptr) {
+					int piece_index = msbIndex(piece_position);
+					moves[moves_found] = Move(piece_index, is_jumping_move, direction);
+				}
+
+				moves_found++;
 			}
 
 			movable &= (movable - 1); // clear least significant bit of movable
