@@ -137,6 +137,7 @@ static bool jumpIsLegal(const Bitboard &board, u32 piece_position, int direction
 
 // populates the list pointed to by next_positions recursively
 // if moves is not a nullptr, it is populated with the moves found
+// in that case, moves[0] should store the partial move that will be built upon
 // returns number of moves found
 static int findDoubleJumps(const Bitboard &board, const u32 piece_position, Bitboard *next_positions, Move *moves) {
 	int moves_found = 0;
@@ -154,30 +155,25 @@ static int findDoubleJumps(const Bitboard &board, const u32 piece_position, Bitb
 			bool is_a_king_now = new_piece_position & new_board.king_pieces;
 			bool piece_was_crowned = !was_a_king_before_move && is_a_king_now;
 
+			if (moves != nullptr) {
+				Move new_partial_move = partial_move;
+				new_partial_move.addJumpDirection(direction);
+				moves[moves_found] = new_partial_move;
+			}
+
 			if (!piece_was_crowned) {
 				moves_found += findDoubleJumps(new_board, new_piece_position,
 					next_positions + moves_found, moves != nullptr ? moves + moves_found : nullptr);
 			} else {
-				next_positions[moves_found] = new_board;
-
-				if (moves != nullptr) {
-					Move updated_move = partial_move;
-					updated_move.addJumpDirection(direction);
-					moves[moves_found] = updated_move;
-				}
-
-				moves_found++;
+				next_positions[moves_found++] = new_board;
 			}
 
 		}
 	}
 
 	if (!moves_found) {
-		next_positions[moves_found] = board;
-
-		// if moves != nullptr, partial move currently stored is actually the full move, so keep it there
-
-		moves_found++;
+		// no need to store partial_move in moves since it is already there
+		next_positions[moves_found++] = board;
 	}
 
 	return moves_found;
@@ -246,22 +242,15 @@ int generateMoves(const Bitboard &board, bool is_whites_turn, Bitboard *next_pos
 			bool is_a_king_now = new_piece_position & new_board.king_pieces;
 			bool piece_was_crowned = !was_a_king_before_move && is_a_king_now;
 
+			if (moves != nullptr) {
+				moves[moves_found] = Move(msbIndex(piece_position), is_jumping_move, direction);
+			}
+
 			if (is_jumping_move && !piece_was_crowned) {
-				if (moves != nullptr) {
-					// store partial move
-					moves[moves_found] = Move(msbIndex(piece_position), true, direction);
-				}
 				moves_found += findDoubleJumps(new_board, new_piece_position,
 					next_positions + moves_found, moves != nullptr ? moves + moves_found : nullptr);
 			} else {
-				next_positions[moves_found] = new_board;
-
-				if (moves != nullptr) {
-					int piece_index = msbIndex(piece_position);
-					moves[moves_found] = Move(piece_index, is_jumping_move, direction);
-				}
-
-				moves_found++;
+				next_positions[moves_found++] = new_board;
 			}
 
 			movable &= (movable - 1); // clear least significant bit of movable
