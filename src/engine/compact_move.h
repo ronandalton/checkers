@@ -1,14 +1,14 @@
-#ifndef MOVE_H
-#define MOVE_H
+#ifndef COMPACT_MOVE_H
+#define COMPACT_MOVE_H
 
 
 #include <cstdint>
 
 
-class Move {
+class CompactMove {
 public:
-	Move(int starting_position, bool is_jump, int direction);
-	Move() = default; // creates a blank move (doesn't exist)
+	CompactMove(int starting_position, bool is_jump, int direction);
+	CompactMove() = default; // creates a blank move (doesn't exist)
 
 	void addJumpDirection(int direction);
 
@@ -36,4 +36,4 @@ private:
 };
 
 
-#endif // MOVE_H
+#endif // COMPACT_MOVE_H

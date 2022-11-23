@@ -1,4 +1,4 @@
-#include "engine/move.h"
+#include "engine/compact_move.h"
 
 #include <cassert>
 #include <algorithm> // for std::max
@@ -14,7 +14,7 @@
 // maximum move length = 1 + 5 + 4 + (2 * 9) = 28 (fits within uin32_t)
 
 
-Move::Move(int starting_position, bool is_jump, int direction) {
+CompactMove::CompactMove(int starting_position, bool is_jump, int direction) {
 	assert(starting_position >= 0 && starting_position < 32);
 	assert(direction >= 0 && direction < 4);
 
@@ -25,7 +25,7 @@ Move::Move(int starting_position, bool is_jump, int direction) {
 }
 
 
-void Move::addJumpDirection(int direction) {
+void CompactMove::addJumpDirection(int direction) {
 	assert(exists());
 	assert(direction >= 0 && direction < 4);
 	assert(getNumberOfJumps() > 0 && getNumberOfJumps() < MAX_JUMPS);
@@ -35,26 +35,26 @@ void Move::addJumpDirection(int direction) {
 }
 
 
-bool Move::exists() const {
+bool CompactMove::exists() const {
 	return getField(EXISTS_SHIFT, EXISTS_WIDTH);
 }
 
 
-int Move::getStartingPosition() const {
+int CompactMove::getStartingPosition() const {
 	assert(exists());
 
 	return getField(START_POS_SHIFT, START_POS_WIDTH);
 }
 
 
-int Move::getNumberOfJumps() const {
+int CompactMove::getNumberOfJumps() const {
 	assert(exists());
 
 	return getField(NUM_JUMPS_SHIFT, NUM_JUMPS_WIDTH);
 }
 
 
-int Move::getDirection(int index) const {
+int CompactMove::getDirection(int index) const {
 	assert(exists());
 	assert(index >= 0 && index < std::max(1, getNumberOfJumps()));
 
@@ -62,13 +62,13 @@ int Move::getDirection(int index) const {
 }
 
 
-bool Move::isJump() const {
+bool CompactMove::isJump() const {
 	assert(exists());
 
 	return getNumberOfJumps() > 0;
 }
 
 
-int Move::getField(int shift, int width) const {
+int CompactMove::getField(int shift, int width) const {
 	return (m_data >> shift) & ((1 << width) - 1);
 }

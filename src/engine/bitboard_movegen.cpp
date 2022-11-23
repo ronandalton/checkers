@@ -1,7 +1,7 @@
-#include "engine/movegen.h"
+#include "engine/bitboard_movegen.h"
 
 #include "engine/bitboard.h"
-#include "engine/move.h"
+#include "engine/compact_move.h"
 
 
 // these masks stop moves near the edges of the board being made if
@@ -139,10 +139,10 @@ static bool jumpIsLegal(const Bitboard &board, u32 piece_position, int direction
 // if moves is not a nullptr, it is populated with the moves found
 // in that case, moves[0] should store the partial move that will be built upon
 // returns number of moves found
-static int findDoubleJumps(const Bitboard &board, const u32 piece_position, Bitboard *next_positions, Move *moves) {
+static int findDoubleJumps(const Bitboard &board, const u32 piece_position, Bitboard *next_positions, CompactMove *moves) {
 	int moves_found = 0;
 
-	const Move partial_move = moves != nullptr ? moves[0] : Move();
+	const CompactMove partial_move = moves != nullptr ? moves[0] : CompactMove();
 
 	// try jumping in each direction
 	for (int direction = 0; direction < NUM_DIRECTIONS; direction++) {
@@ -156,7 +156,7 @@ static int findDoubleJumps(const Bitboard &board, const u32 piece_position, Bitb
 			bool piece_was_crowned = !was_a_king_before_move && is_a_king_now;
 
 			if (moves != nullptr) {
-				Move new_partial_move = partial_move;
+				CompactMove new_partial_move = partial_move;
 				new_partial_move.addJumpDirection(direction);
 				moves[moves_found] = new_partial_move;
 			}
@@ -184,7 +184,7 @@ static int findDoubleJumps(const Bitboard &board, const u32 piece_position, Bitb
 // next_positions is an out parameter pointing to an array to populate
 // moves is an out parameter pointing to a moves list to populate (can be null if not needed)
 // assumes output arrays are large enough to hold result
-int generateMoves(const Bitboard &board, bool is_whites_turn, Bitboard *next_positions, Move *moves) {
+int generateMoves(const Bitboard &board, bool is_whites_turn, Bitboard *next_positions, CompactMove *moves) {
 	// get piece types from perspective of player to move
 	const u32 my_pieces = is_whites_turn ? board.white_pieces : board.black_pieces;
 	const u32 their_pieces = is_whites_turn ? board.black_pieces : board.white_pieces;
@@ -243,7 +243,7 @@ int generateMoves(const Bitboard &board, bool is_whites_turn, Bitboard *next_pos
 			bool piece_was_crowned = !was_a_king_before_move && is_a_king_now;
 
 			if (moves != nullptr) {
-				moves[moves_found] = Move(msbIndex(piece_position), is_jumping_move, direction);
+				moves[moves_found] = CompactMove(msbIndex(piece_position), is_jumping_move, direction);
 			}
 
 			if (is_jumping_move && !piece_was_crowned) {
