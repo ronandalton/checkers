@@ -4,6 +4,8 @@ Checkers/Draughts Game
 This is an implementation of the American Checkers or English Draughts game.
 You can play against the computer, play with another person on the same computer, or watch the computer play itself.
 
+See https://en.wikipedia.org/wiki/English_draughts for more information, including the rules.
+
 Building
 --------
 
