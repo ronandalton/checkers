@@ -13,7 +13,7 @@ public:
 	Move findBestMove(const Game &game);
 
 private:
-	int negamax(const Bitboard &board, bool is_whites_turn, int depth, CompactMove *best_move);
+	int negamax(const Bitboard &board, bool is_whites_turn, int depth, int alpha, int beta, CompactMove *best_move);
 
 	static int evaluate(const Bitboard &board);
 

@@ -82,14 +82,14 @@ Move Engine::findBestMove(const Game &game) {
 
 	CompactMove best_move;
 
-	negamax(board, is_whites_turn, MAX_DEPTH, &best_move);
+	negamax(board, is_whites_turn, MAX_DEPTH, -INT_MAX, INT_MAX, &best_move);
 
 	return convertCompactMovetoNormalMove(best_move);
 }
 
 
 // best_move is optional - used for root call to this function
-int Engine::negamax(const Bitboard &board, bool is_whites_turn, int depth, CompactMove *best_move) {
+int Engine::negamax(const Bitboard &board, bool is_whites_turn, int depth, int alpha, int beta, CompactMove *best_move) {
 	if (depth == 0) {
 		return evaluate(board) * (is_whites_turn ? -1 : 1);
 	}
@@ -102,13 +102,19 @@ int Engine::negamax(const Bitboard &board, bool is_whites_turn, int depth, Compa
 	int value = -INT_MAX;
 
 	for (int i = 0; i < moves_found; i++) {
-		int new_value = -negamax(next_positions[i], !is_whites_turn, depth - 1, nullptr);
+		int new_value = -negamax(next_positions[i], !is_whites_turn, depth - 1, -beta, -alpha, nullptr);
 
 		if (new_value > value) {
 			value = new_value;
 			if (best_move != nullptr) {
 				*best_move = moves_available[i];
 			}
+		}
+
+		alpha = std::max(alpha, value);
+
+		if (alpha >= beta) {
+			break;
 		}
 	}
 
