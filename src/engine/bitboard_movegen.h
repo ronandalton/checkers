@@ -6,6 +6,9 @@ struct Bitboard;
 class CompactMove;
 
 
+constexpr int MAX_MOVES = 49;
+
+
 int generateMoves(const Bitboard &board, bool is_whites_turn, Bitboard *next_positions, CompactMove *moves);
 
 
