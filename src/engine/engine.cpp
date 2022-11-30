@@ -156,7 +156,12 @@ int Engine::evaluate(const Bitboard &board) {
 	int value = (black_men - white_men) * piece_value
 		+ (black_kings - white_kings) * king_value;
 
- 	// TODO: devise method to encourage exchanges when in a winning position
+	int num_black_pieces = black_men + black_kings;
+	int num_white_pieces = white_men + white_kings;
+	int total_num_pieces = num_black_pieces + num_white_pieces;
+
+	// try to encourage exchanges when in a winning position
+	value += (num_black_pieces - num_white_pieces) * (32 - total_num_pieces);
 
 	return value;
 }
