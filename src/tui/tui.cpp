@@ -17,7 +17,7 @@
 /**
  * Runs the game with a text user interface.
  */
-void Tui::run() {
+int Tui::run(int argc, char *argv[]) {
 	printIntro();
 	
 	do {
@@ -33,6 +33,8 @@ void Tui::run() {
 	} while (askToPlayAgain());
 	
 	printOutro();
+
+	return 0;
 }
 
 

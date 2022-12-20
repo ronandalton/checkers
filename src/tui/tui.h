@@ -15,7 +15,7 @@ enum class MatchType;
 
 class Tui {
 public:
-	void run();
+	int run(int argc, char *argv[]);
 
 private:
 	void printIntro() const;
