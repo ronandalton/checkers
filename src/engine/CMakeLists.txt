@@ -1,12 +1,10 @@
-set(
-	ENGINE_SOURCES
-		bitboard.h
-		bitboard_movegen.cpp
-		bitboard_movegen.h
-		compact_move.cpp
-		compact_move.h
-		engine.cpp
-		engine.h
+set(ENGINE_SOURCES
+	${CMAKE_CURRENT_SOURCE_DIR}/bitboard.h
+	${CMAKE_CURRENT_SOURCE_DIR}/bitboard_movegen.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/bitboard_movegen.h
+	${CMAKE_CURRENT_SOURCE_DIR}/compact_move.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/compact_move.h
+	${CMAKE_CURRENT_SOURCE_DIR}/engine.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/engine.h
+	PARENT_SCOPE
 )
-
-add_library(engine STATIC ${ENGINE_SOURCES})

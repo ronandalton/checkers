@@ -1,9 +1,5 @@
-set(
-	TUI_SOURCES
-		tui.cpp
-		tui.h
+set(TUI_SOURCES
+	${CMAKE_CURRENT_SOURCE_DIR}/tui.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/tui.h
+	PARENT_SCOPE
 )
-
-add_library(tui STATIC ${TUI_SOURCES})
-
-target_link_libraries(tui LINK_PUBLIC game)

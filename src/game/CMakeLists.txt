@@ -1,24 +1,22 @@
-set(
-	GAME_SOURCES
-		board.cpp
-		board.h
-		coord.cpp
-		coord.h
-		direction.cpp
-		direction.h
-		game.cpp
-		game.h
-		matchtype.h
-		move.cpp
-		move.h
-		movegen.cpp
-		movegen.h
-		piece.cpp
-		piece.h
-		player.h
-		position.cpp
-		position.h
-		turn.h
+set(GAME_SOURCES
+	${CMAKE_CURRENT_SOURCE_DIR}/board.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/board.h
+	${CMAKE_CURRENT_SOURCE_DIR}/coord.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/coord.h
+	${CMAKE_CURRENT_SOURCE_DIR}/direction.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/direction.h
+	${CMAKE_CURRENT_SOURCE_DIR}/game.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/game.h
+	${CMAKE_CURRENT_SOURCE_DIR}/matchtype.h
+	${CMAKE_CURRENT_SOURCE_DIR}/move.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/move.h
+	${CMAKE_CURRENT_SOURCE_DIR}/movegen.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/movegen.h
+	${CMAKE_CURRENT_SOURCE_DIR}/piece.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/piece.h
+	${CMAKE_CURRENT_SOURCE_DIR}/player.h
+	${CMAKE_CURRENT_SOURCE_DIR}/position.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/position.h
+	${CMAKE_CURRENT_SOURCE_DIR}/turn.h
+	PARENT_SCOPE
 )
-
-add_library(game STATIC ${GAME_SOURCES})

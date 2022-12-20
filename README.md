@@ -16,4 +16,4 @@ Issue the following commands to download, build and run the application:
     mkdir build && cd build
     cmake -DCMAKE_BUILD_TYPE=Debug ..
     make -j$(nproc)
-    ./bin/checkers_run
+    ./bin/checkers
