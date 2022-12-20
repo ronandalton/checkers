@@ -11,7 +11,7 @@ Building
 
 Issue the following commands to download, build and run the application:
 
-    git clone --recurse-submodules https://github.com/ronandalton/checkers.git
+    git clone https://github.com/ronandalton/checkers.git
     cd checkers
     mkdir build && cd build
     cmake -DCMAKE_BUILD_TYPE=Debug ..

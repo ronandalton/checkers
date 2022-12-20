@@ -1,5 +1,0 @@
-set(
-	TUI_TEST_SOURCES
-		# ${CMAKE_CURRENT_SOURCE_DIR}/{file}.cpp
-	PARENT_SCOPE
-)
