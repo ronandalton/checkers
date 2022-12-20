@@ -1,6 +1,6 @@
-#include "mainwindow.h"
+#include "gui/mainwindow.h"
 
-#include "renderarea.h"
+#include "gui/renderarea.h"
 
 
 MainWindow::MainWindow()

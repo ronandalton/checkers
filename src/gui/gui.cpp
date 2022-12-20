@@ -1,7 +1,8 @@
 #include "gui/gui.h"
 
+#include "gui/mainwindow.h"
+
 #include <QApplication>
-#include "mainwindow.h"
 
 
 /**

@@ -1,4 +1,4 @@
-#include "renderarea.h"
+#include "gui/renderarea.h"
 
 #include <QPainter>
 
