@@ -4,12 +4,15 @@
 
 #include <QMainWindow>
 
+class Game;
+class Engine;
+
 
 class MainWindow : public QMainWindow {
 	Q_OBJECT
 
 public:
-	MainWindow();
+	MainWindow(Game *game, Engine *engine);
 };
 
 
