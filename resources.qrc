@@ -6,5 +6,7 @@
 		<file>images/black_king.png</file>
 		<file>images/white_man.png</file>
 		<file>images/white_king.png</file>
+		<file>images/selected_piece_highlight.png</file>
+		<file>images/landing_square_highlight.png</file>
 	</qresource>
 </RCC>
