@@ -36,6 +36,7 @@ void RenderArea::mousePressEvent(QMouseEvent *event) {
 		: -1;
 
 	if (square_clicked == -1) {
+		repaint();
 		return;
 	}
 
