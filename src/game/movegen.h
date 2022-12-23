@@ -17,6 +17,7 @@ public:
 	
 	static std::vector<Move> generateMoves(const Board &board, Turn turn);
 	static Board getBoardAfterMove(Board board, const Move &move);
+	static Board getBoardAfterSimpleMove(Board board, Position start_position, Position end_position);
 	
 private:
 	static bool moveIsLegal(const Board &board, Position position, Direction direction, bool jumping);

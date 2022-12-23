@@ -66,6 +66,28 @@ Board MoveGen::getBoardAfterMove(Board board, const Move &move) {
 }
 
 
+// returns the board position after making a move defined by a start and end position
+// it is assumed that the move is valid
+// the move can be either a normal move or a jumping move, but a not a multi-jump move
+Board MoveGen::getBoardAfterSimpleMove(Board board, Position start_position, Position end_position) {
+	// try all possible moves from start_position to find one with matching end_positon
+	// needed in order to find jumped piece in the case of jumping moves
+	for (int is_jumping = 0; is_jumping < 2; is_jumping++) {
+		for (Direction direction : Direction::ALL_DIRECTIONS) {
+			if (start_position.offsetIsValid(direction, is_jumping)) {
+				const Move move = getMove(start_position, direction, is_jumping);
+				if (move.getEndPosition() == end_position) {
+					board = getBoardAfterMove(board, move);
+					break;
+				}
+			}
+		}
+	}
+
+	return board;
+}
+
+
 // returns true if the move described is legal in isolation (eg. ignoring potential compulsory jumps elsewhere on board)
 bool MoveGen::moveIsLegal(const Board &board, Position position, Direction direction, bool jumping) {
 	if (board.pieceAt(position).canMoveInDirection(direction)) {
