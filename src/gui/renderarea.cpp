@@ -1,6 +1,7 @@
 #include "gui/renderarea.h"
 
 #include "game/coord.h"
+#include "game/movegen.h"
 
 #include <QPainter>
 #include <QMouseEvent>
@@ -18,6 +19,9 @@ RenderArea::RenderArea(Game *game, Engine *engine, QWidget *parent)
 	m_pixmap_selected_piece_highlight.load(":images/selected_piece_highlight.png");
 	m_pixmap_landing_square_highlight.load(":images/landing_square_highlight.png");
 
+	m_moves_available = m_game->getAvailableMoves();
+	m_board = m_game->getBoard();
+
 	setFixedSize(m_sprite_size * BOARD_ROWS_COLS, m_sprite_size * BOARD_ROWS_COLS);
 }
 
@@ -25,17 +29,117 @@ RenderArea::RenderArea(Game *game, Engine *engine, QWidget *parent)
 void RenderArea::mousePressEvent(QMouseEvent *event) {
 	event->accept();
 
-	int previously_selected_square = m_currently_selected_square;
-	m_currently_selected_square = -1;
-
-	Coord clicked_square_position(event->position().x() / m_sprite_size,
+	Coord square_clicked_coord(event->position().x() / m_sprite_size,
 		event->position().y() / m_sprite_size);
-
-	int square_clicked = clicked_square_position.isValid()
-		? static_cast<int>(clicked_square_position.getPosition())
+	int position_clicked = square_clicked_coord.isValid()
+		? static_cast<int>(square_clicked_coord.getPosition())
 		: -1;
 
-	if (square_clicked == -1) {
+	bool clicked_landing_square = false;
+
+	for (int landing_square : m_landing_squares) {
+		if (position_clicked == landing_square) {
+			clicked_landing_square = true;
+			break;
+		}
+	}
+
+	if (clicked_landing_square) {
+		// make the move
+		m_board = MoveGen::getBoardAfterSimpleMove(m_board, m_currently_selected_square, position_clicked);
+
+		m_currently_selected_square = position_clicked;
+		m_num_hops_made_in_current_move++;
+
+		// update m_moves_available by removing moves that no longer start with current hop path
+		std::vector<Move> new_moves_available;
+		for (const Move &move : m_moves_available) {
+			if (static_cast<int>(move.getPositions().at(m_num_hops_made_in_current_move)) // cast needed?
+					== m_currently_selected_square) {
+				new_moves_available.push_back(move);
+			}
+		}
+		m_moves_available = new_moves_available;
+
+		m_landing_squares.clear();
+		for (const Move &move : m_moves_available) {
+			if (move.getPositions().size() - 1 >= m_num_hops_made_in_current_move + 1) {
+				int new_landing_position = move.getPositions().at(m_num_hops_made_in_current_move + 1);
+				bool landing_position_already_recorded = false;
+
+				for (int landing_position : m_landing_squares) {
+					if (new_landing_position == landing_position) {
+						landing_position_already_recorded = true;
+						break;
+					}
+				}
+
+				if (!landing_position_already_recorded) {
+					m_landing_squares.push_back(new_landing_position);
+				}
+			}
+		}
+
+		if (m_landing_squares.size() == 0) {
+			// the move is over
+			m_game->doMove(m_moves_available.at(0));
+			m_board = m_game->getBoard(); // shouldn't be needed
+			m_currently_selected_square = -1;
+			m_move_in_progress = false;
+		} else {
+			m_move_in_progress = true;
+		}
+	} else { // didn't click a landing square
+		// update the selection
+		if (!m_move_in_progress) {
+			if (position_clicked != -1
+					&& m_board.pieceAt(position_clicked).belongsTo(m_game->getTurn())
+					&& position_clicked != m_currently_selected_square) {
+				m_currently_selected_square = position_clicked;
+			} else {
+				m_currently_selected_square = -1;
+			}
+		}
+	}
+
+	if (m_currently_selected_square != -1) {
+		if (!m_move_in_progress) {
+			m_moves_available.clear();
+			for (const Move &move : m_game->getAvailableMoves()) {
+				if (move.getPositions().at(0) == m_currently_selected_square) {
+					m_moves_available.push_back(move);
+				}
+			}
+
+			// TODO: put below into a new function perhaps (it's duplicated above)
+			m_landing_squares.clear();
+			for (const Move &move : m_moves_available) {
+				if (move.getPositions().size() - 1 >= m_num_hops_made_in_current_move + 1) {
+					int new_landing_position = move.getPositions().at(m_num_hops_made_in_current_move + 1);
+					bool landing_position_already_recorded = false;
+
+					for (int landing_position : m_landing_squares) {
+						if (new_landing_position == landing_position) {
+							landing_position_already_recorded = true;
+							break;
+						}
+					}
+
+					if (!landing_position_already_recorded) {
+						m_landing_squares.push_back(new_landing_position);
+					}
+				}
+			}
+		}
+	} else {
+		m_moves_available = m_game->getAvailableMoves();
+		m_num_hops_made_in_current_move = 0;
+	}
+
+	repaint();
+
+#if 0
+	if (position_clicked == -1) {
 		repaint();
 		return;
 	}
@@ -45,7 +149,7 @@ void RenderArea::mousePressEvent(QMouseEvent *event) {
 	if (previously_selected_square != -1) {
 		for (const Move &move : m_game->getAvailableMoves()) {
 			if (move.getStartPosition() == previously_selected_square
-					&& move.getPosition(1) == square_clicked) {
+					&& move.getPosition(1) == position_clicked) {
 				move_to_make = &move;
 				break;
 			}
@@ -55,16 +159,18 @@ void RenderArea::mousePressEvent(QMouseEvent *event) {
 
 	if (move_to_make != nullptr) {
 		m_game->doMove(*move_to_make);
+		m_board = m_game->getBoard();
 	} else {
-		if (square_clicked != previously_selected_square) {
+		if (position_clicked != previously_selected_square) {
 			Turn turn = m_game->getTurn();
-			if (m_game->getBoard().pieceAt(square_clicked).belongsTo(turn)) {
-				m_currently_selected_square = square_clicked;
+			if (m_game->getBoard().pieceAt(position_clicked).belongsTo(turn)) {
+				m_currently_selected_square = position_clicked;
 			}
 		}
 	}
 
 	repaint();
+#endif
 }
 
 
@@ -104,7 +210,7 @@ void RenderArea::renderBoardPieces() {
 	painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
 	for (Position pos : Position::ALL_POSITIONS) {
-		Piece piece = m_game->getBoard().pieceAt(pos);
+		Piece piece = m_board.pieceAt(pos);
 
 		if (const QPixmap *pixmap = getPiecePixmap(piece)) {
 			painter.drawPixmap(QRect(pos.getX() * m_sprite_size, pos.getY() * m_sprite_size,
@@ -127,15 +233,12 @@ void RenderArea::renderBoardHighlights() {
 			m_pixmap_selected_piece_highlight.rect());
 
 		// render landing square highlights
-		for (const Move &move : m_game->getAvailableMoves()) {
-			if (move.getStartPosition() == m_currently_selected_square) {
-				Position next_pos = move.getPosition(1);
-
-				painter.drawPixmap(QRect(next_pos.getX() * m_sprite_size,
-					next_pos.getY() * m_sprite_size, m_sprite_size, m_sprite_size),
-					m_pixmap_landing_square_highlight,
-					m_pixmap_landing_square_highlight.rect());
-			}
+		for (int landing_square : m_landing_squares) {
+			Position position(landing_square);
+			painter.drawPixmap(QRect(position.getX() * m_sprite_size,
+				position.getY() * m_sprite_size, m_sprite_size, m_sprite_size),
+				m_pixmap_landing_square_highlight,
+				m_pixmap_landing_square_highlight.rect());
 		}
 	}
 }
