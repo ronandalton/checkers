@@ -20,16 +20,20 @@ public:
 	explicit RenderArea(Game *game, Engine *engine, QWidget *parent = nullptr);
 
 protected:
+	void paintEvent(QPaintEvent *event) override;
 	void mousePressEvent(QMouseEvent *event) override;
 	void mouseReleaseEvent(QMouseEvent *event) override;
 	void mouseMoveEvent(QMouseEvent *event) override;
-	void paintEvent(QPaintEvent *event) override;
 
 private:
 	void loadSprites();
-	void renderBoardBackground();
-	void renderBoardPieces();
-	void renderBoardHighlights();
+
+	void renderBoardBackground(QPainter &painter);
+	void renderBoardPieces(QPainter &painter);
+	void renderBoardHighlights(QPainter &painter);
+	void renderCurrentlySelectedPieceHighlight(QPainter &painter);
+	void renderLandingSquareHighlights(QPainter &painter);
+	void renderTile(QPainter &painter, const QPixmap &pixmap, Coord position);
 	QPixmap* getPiecePixmap(Piece piece);
 
 	Coord getSquareClicked(const QMouseEvent *event) const;

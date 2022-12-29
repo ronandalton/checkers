@@ -21,12 +21,23 @@ RenderArea::RenderArea(Game *game, Engine *engine, QWidget *parent)
 }
 
 
+void RenderArea::paintEvent(QPaintEvent *event) {
+	QPainter painter(this);
+	painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+
+	renderBoardBackground(painter);
+	renderBoardPieces(painter);
+	renderBoardHighlights(painter);
+}
+
+
 void RenderArea::mousePressEvent(QMouseEvent *event) {
 	event->accept();
 
 	Coord square_clicked = getSquareClicked(event);
 	handleSquareClicked(square_clicked);
 }
+
 
 void RenderArea::mouseReleaseEvent(QMouseEvent *event) {
 	event->accept();
@@ -35,13 +46,6 @@ void RenderArea::mouseReleaseEvent(QMouseEvent *event) {
 
 void RenderArea::mouseMoveEvent(QMouseEvent *event) {
 	event->accept();
-}
-
-
-void RenderArea::paintEvent(QPaintEvent *event) {
-	renderBoardBackground();
-	renderBoardPieces();
-	renderBoardHighlights();
 }
 
 
@@ -57,56 +61,55 @@ void RenderArea::loadSprites() {
 }
 
 
-void RenderArea::renderBoardBackground() {
-	QPainter painter(this);
-	painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-
+void RenderArea::renderBoardBackground(QPainter &painter) {
 	for (int y = 0; y < BOARD_ROWS_COLS; y++) {
 		for (int x = 0; x < BOARD_ROWS_COLS; x++) {
-			const QPixmap &pixmap = Coord(x, y).isValid() ? m_pixmap_dark_square : m_pixmap_light_square;
-			painter.drawPixmap(QRect(x * SPRITE_SIZE, y * SPRITE_SIZE,
-				SPRITE_SIZE, SPRITE_SIZE), pixmap, pixmap.rect());
+			const QPixmap &pixmap = Coord(x, y).isValid()
+				? m_pixmap_dark_square : m_pixmap_light_square;
+			renderTile(painter, pixmap, Coord(x, y));
 		}
 	}
 }
 
 
-void RenderArea::renderBoardPieces() {
-	QPainter painter(this);
-	painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-
+void RenderArea::renderBoardPieces(QPainter &painter) {
 	for (Position pos : Position::ALL_VALID_POSITIONS) {
 		Piece piece = m_board.pieceAt(pos);
 
 		if (const QPixmap *pixmap = getPiecePixmap(piece)) {
-			painter.drawPixmap(QRect(pos.getX() * SPRITE_SIZE, pos.getY() * SPRITE_SIZE,
-				SPRITE_SIZE, SPRITE_SIZE), *pixmap, pixmap->rect());
+			renderTile(painter, *pixmap, pos.getCoord());
 		}
 	}
 }
 
 
-void RenderArea::renderBoardHighlights() {
-	QPainter painter(this);
-	painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+void RenderArea::renderBoardHighlights(QPainter &painter) {
+	renderCurrentlySelectedPieceHighlight(painter);
+	renderLandingSquareHighlights(painter);
+}
 
-	// render selected piece highlight
-	if (m_currently_selected_square != -1) {
-		Position pos(m_currently_selected_square);
 
-		painter.drawPixmap(QRect(pos.getX() * SPRITE_SIZE, pos.getY() * SPRITE_SIZE,
-			SPRITE_SIZE, SPRITE_SIZE), m_pixmap_selected_piece_highlight,
-			m_pixmap_selected_piece_highlight.rect());
+void RenderArea::renderCurrentlySelectedPieceHighlight(QPainter &painter) {
+	if (m_currently_selected_square) {
+		renderTile(painter, m_pixmap_selected_piece_highlight, *m_currently_selected_square);
 	}
+}
 
-	// render landing square highlights
-	for (int landing_square : m_landing_squares) {
-		Position position(landing_square);
-		painter.drawPixmap(QRect(position.getX() * SPRITE_SIZE,
-			position.getY() * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE),
-			m_pixmap_landing_square_highlight,
-			m_pixmap_landing_square_highlight.rect());
+
+void RenderArea::renderLandingSquareHighlights(QPainter &painter) {
+	for (Coord landing_square : m_landing_squares) {
+		renderTile(painter, m_pixmap_landing_square_highlight, landing_square);
 	}
+}
+
+
+void RenderArea::renderTile(QPainter &painter, const QPixmap &pixmap, Coord position) {
+	int pixel_pos_x = position.getX() * SPRITE_SIZE;
+	int pixel_pos_y = position.getY() * SPRITE_SIZE;
+
+	QRect destination_rect(pixel_pos_x, pixel_pos_y, SPRITE_SIZE, SPRITE_SIZE);
+
+	painter.drawPixmap(destination_rect, pixmap, pixmap.rect());
 }
 
 
@@ -198,6 +201,7 @@ bool RenderArea::squareHoldsAPieceThatBelongsToCurrentPlayer(Coord square_clicke
 
 	return m_board.pieceAt(position_clicked).belongsTo(m_game->getTurn());
 }
+
 
 void RenderArea::clearSelection() {
 	m_currently_selected_square.reset();
