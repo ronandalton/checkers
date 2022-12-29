@@ -5,10 +5,12 @@
 #include <QWidget>
 #include <QPixmap>
 #include <vector>
+#include <optional>
 
 #include "game/game.h"
 #include "engine/engine.h"
 #include "game/board.h"
+#include "game/coord.h"
 
 
 class RenderArea : public QWidget {
@@ -24,26 +26,44 @@ protected:
 	void paintEvent(QPaintEvent *event) override;
 
 private:
+	void loadSprites();
 	void renderBoardBackground();
 	void renderBoardPieces();
 	void renderBoardHighlights();
 	QPixmap* getPiecePixmap(Piece piece);
 
+	Coord getSquareClicked(const QMouseEvent *event) const;
+	void handleSquareClicked(Coord square_clicked);
+	bool currentlyAcceptingInput() const;
+	void handleSquareClickedWhenNoMoveInProgress(Coord square_clicked);
+	void handleSquareClickedWhenMoveAlreadyInProgress(Coord square_clicked);
+	bool isCurrentlySelectedSquare(Coord square_clicked) const;
+	bool isALandingSquare(Coord square_clicked) const;
+	bool squareHoldsAPieceThatBelongsToCurrentPlayer(Coord square_clicked) const;
+	void clearSelection();
+	void selectSquare(Coord square_clicked);
+	void resetMovesAvailableSubset();
+	void restrictMovesAvailableSubset();
+	void updateLandingSquares();
+	void addLandingSquare(Coord landing_square);
+	void handleLandingSquareClicked(Coord square_clicked);
+	void startMove();
+	void makeHop(Coord landing_square);
+	bool isMoveOver() const;
+	void endMove();
+
 	static constexpr int BOARD_ROWS_COLS = 8;
-	int m_sprite_size = 64;
+	static constexpr int SPRITE_SIZE = 64;
 
 	Game *m_game;
 	Engine *m_engine;
 
-	int m_currently_selected_square = -1;
-	std::vector<int> m_landing_squares;
-	bool m_move_in_progress = false;
-
-	// the following variables are needed to store the game state
-	// while the user is in the process of making a multi-jump move
-	int m_num_hops_made_in_current_move = 0;
-	std::vector<Move> m_moves_available;
 	Board m_board;
+	std::optional<Coord> m_currently_selected_square;
+	std::vector<Move> m_moves_available_subset;
+	std::vector<Coord> m_landing_squares;
+	bool m_move_in_progress = false;
+	int m_num_hops_made_in_current_move = 0;
 
 	QPixmap m_pixmap_dark_square;
 	QPixmap m_pixmap_light_square;
