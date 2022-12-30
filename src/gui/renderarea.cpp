@@ -252,8 +252,11 @@ void RenderArea::updateLandingSquares() {
 		Position currently_selected_position = m_currently_selected_square->getPosition();
 
 		for (const Move &move : m_moves_available_subset) {
-			if (move.getStartPosition() == currently_selected_position) {
-				Coord landing_square = move.getPosition(1).getCoord();
+			int num_hops_in_move = move.getPositions().size() - 1;
+			bool is_move_continuation = (num_hops_in_move > m_num_hops_made_in_current_move);
+
+			if (is_move_continuation) {
+				Coord landing_square = move.getPosition(m_num_hops_made_in_current_move + 1).getCoord();
 				addLandingSquare(landing_square);
 			}
 		}
@@ -287,12 +290,11 @@ void RenderArea::handleLandingSquareClicked(Coord square_clicked) {
 
 void RenderArea::startMove() {
 	m_move_in_progress = true;
-	m_num_hops_made_in_current_move = 0;
 }
 
 
 void RenderArea::makeHop(Coord landing_square) {
-	m_board.movePiece(from_square, to_square);
+	m_board.movePiece(*m_currently_selected_square, landing_square);
 	m_currently_selected_square = landing_square;
 	m_num_hops_made_in_current_move++;
 	restrictMovesAvailableSubset();
