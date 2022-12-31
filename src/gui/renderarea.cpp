@@ -56,8 +56,8 @@ void RenderArea::loadSprites() {
 	m_pixmap_black_king.load(":/images/black_king.png");
 	m_pixmap_white_man.load(":/images/white_man.png");
 	m_pixmap_white_king.load(":/images/white_king.png");
-	m_pixmap_selected_piece_highlight.load(":images/selected_piece_highlight.png");
-	m_pixmap_landing_square_highlight.load(":images/landing_square_highlight.png");
+	m_pixmap_selected_piece_highlight.load(":/images/selected_piece_highlight.png");
+	m_pixmap_landing_square_highlight.load(":/images/landing_square_highlight.png");
 }
 
 
@@ -76,7 +76,9 @@ void RenderArea::renderBoardPieces(QPainter &painter) {
 	for (Position pos : Position::ALL_VALID_POSITIONS) {
 		Piece piece = m_board.pieceAt(pos);
 
-		if (const QPixmap *pixmap = getPiecePixmap(piece)) {
+		QPixmap *pixmap = getPiecePixmap(piece);
+
+		if (pixmap) {
 			renderTile(painter, *pixmap, pos.getCoord());
 		}
 	}
@@ -107,9 +109,10 @@ void RenderArea::renderTile(QPainter &painter, const QPixmap &pixmap, Coord posi
 	int pixel_pos_x = position.getX() * SPRITE_SIZE;
 	int pixel_pos_y = position.getY() * SPRITE_SIZE;
 
-	QRect destination_rect(pixel_pos_x, pixel_pos_y, SPRITE_SIZE, SPRITE_SIZE);
+	QRect source_rectangle = pixmap.rect();
+	QRect target_rectangle(pixel_pos_x, pixel_pos_y, SPRITE_SIZE, SPRITE_SIZE);
 
-	painter.drawPixmap(destination_rect, pixmap, pixmap.rect());
+	painter.drawPixmap(target_rectangle, pixmap, source_rectangle);
 }
 
 
@@ -231,17 +234,19 @@ void RenderArea::restrictMovesAvailableSubset() {
 
 	Position current_position = m_currently_selected_square->getPosition();
 
-	std::vector<Move> new_moves_available;
+	std::vector<Move> new_moves_available_subset;
 
 	for (const Move &move : m_moves_available_subset) {
-		Position reference_position = move.getPosition(m_num_hops_made_in_current_move);
+		if (move.getPositions().size() > m_num_hops_made_in_current_move) {
+			Position test_position = move.getPosition(m_num_hops_made_in_current_move);
 
-		if (reference_position == current_position) {
-			new_moves_available.push_back(move);
+			if (test_position == current_position) {
+				new_moves_available_subset.push_back(move);
+			}
 		}
 	}
 
-	m_moves_available_subset = new_moves_available;
+	m_moves_available_subset = new_moves_available_subset;
 }
 
 
@@ -305,11 +310,11 @@ void RenderArea::makeHop(Coord landing_square) {
 bool RenderArea::isMoveOver() const {
 	int moves_subset_size = m_moves_available_subset.size();
 
-	if (moves_subset_size > 1) {
+	if (moves_subset_size != 1) {
 		return false;
 	}
 
-	int num_hops_in_move_left = m_moves_available_subset.at(0).getPositions().size() - 1;
+	int num_hops_in_move_left = m_moves_available_subset[0].getPositions().size() - 1;
 
 	return m_num_hops_made_in_current_move == num_hops_in_move_left;
 }
