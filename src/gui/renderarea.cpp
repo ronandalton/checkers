@@ -73,7 +73,7 @@ void RenderArea::renderBoardBackground(QPainter &painter) {
 
 
 void RenderArea::renderBoardPieces(QPainter &painter) {
-	for (Position pos : Position::ALL_VALID_POSITIONS) {
+	for (Position pos : Position::ALL_POSITIONS) {
 		Piece piece = m_board.pieceAt(pos);
 
 		QPixmap *pixmap = getPiecePixmap(piece);

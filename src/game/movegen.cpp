@@ -70,7 +70,7 @@ Board MoveGen::getBoardAfterMove(Board board, const Move &move) {
 // it is assumed that the move is valid
 // the move can be either a normal move or a jumping move, but a not a multi-jump move
 Board MoveGen::getBoardAfterSimpleMove(Board board, Position start_position, Position end_position) {
-	// try all possible moves from start_position to find one with matching end_positon
+	// try all possible moves from start_position to find one with matching end_position
 	// needed in order to find jumped piece in the case of jumping moves
 	for (int is_jumping = 0; is_jumping < 2; is_jumping++) {
 		for (Direction direction : Direction::ALL_DIRECTIONS) {
