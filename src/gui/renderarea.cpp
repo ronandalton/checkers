@@ -215,6 +215,7 @@ void RenderArea::clearSelection() {
 
 void RenderArea::selectSquare(Coord square_clicked) {
 	assert(!m_move_in_progress);
+	assert(square_clicked.isValid());
 
 	resetMovesAvailableSubset();
 	m_currently_selected_square = square_clicked;
@@ -230,19 +231,19 @@ void RenderArea::resetMovesAvailableSubset() {
 
 
 void RenderArea::restrictMovesAvailableSubset() {
-	assert(m_currently_selected_square && m_currently_selected_square->isValid());
+	assert(m_currently_selected_square);
 
 	Position current_position = m_currently_selected_square->getPosition();
 
 	std::vector<Move> new_moves_available_subset;
 
 	for (const Move &move : m_moves_available_subset) {
-		if (move.getPositions().size() > m_num_hops_made_in_current_move) {
-			Position test_position = move.getPosition(m_num_hops_made_in_current_move);
+		assert(m_num_hops_made_in_current_move < move.getPositions().size());
 
-			if (test_position == current_position) {
-				new_moves_available_subset.push_back(move);
-			}
+		Position test_position = move.getPosition(m_num_hops_made_in_current_move);
+
+		if (test_position == current_position) {
+			new_moves_available_subset.push_back(move);
 		}
 	}
 
