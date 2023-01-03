@@ -62,7 +62,7 @@ bool Position::isCrowningSquare(Turn turn) const {
 
 // returns true if applying an offset (double if specified) in direction would be valid
 bool Position::offsetIsValid(Direction direction, bool is_double_offset) const {
-	return getCoord().applyOffset(direction, is_double_offset).isValid();
+	return getCoord().applyOffset(direction, is_double_offset).isValidPosition();
 }
 
 

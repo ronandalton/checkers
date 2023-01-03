@@ -15,7 +15,7 @@ public:
 	
 	int getX() const;
 	int getY() const;
-	bool isValid() const;
+	bool isValidPosition() const;
 	Position getPosition() const;
 	bool operator==(const Coord &coord) const;
 	

@@ -195,7 +195,7 @@ void Tui::printBoard() const {
 		for (int x = 0; x < 8; x++) {
 			char symbol;
 			
-			if (Coord(x, y).isValid()) {
+			if (Coord(x, y).isValidPosition()) {
 				Piece piece = m_game.getBoard().pieceAt(index);
 				
 				if (piece.belongsTo(Turn::BLACK)) {

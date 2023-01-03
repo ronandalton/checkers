@@ -64,7 +64,7 @@ void RenderArea::loadSprites() {
 void RenderArea::renderBoardBackground(QPainter &painter) {
 	for (int y = 0; y < BOARD_ROWS_COLS; y++) {
 		for (int x = 0; x < BOARD_ROWS_COLS; x++) {
-			const QPixmap &pixmap = Coord(x, y).isValid()
+			const QPixmap &pixmap = Coord(x, y).isValidPosition()
 				? m_pixmap_dark_square : m_pixmap_light_square;
 			renderTile(painter, pixmap, Coord(x, y));
 		}
@@ -196,7 +196,7 @@ bool RenderArea::isALandingSquare(Coord square_clicked) const {
 
 
 bool RenderArea::squareHoldsAPieceThatBelongsToCurrentPlayer(Coord square_clicked) const {
-	if (!square_clicked.isValid()) {
+	if (!square_clicked.isValidPosition()) {
 		return false;
 	}
 
@@ -215,7 +215,7 @@ void RenderArea::clearSelection() {
 
 void RenderArea::selectSquare(Coord square_clicked) {
 	assert(!m_move_in_progress);
-	assert(square_clicked.isValid());
+	assert(square_clicked.isValidPosition());
 
 	resetMovesAvailableSubset();
 	m_currently_selected_square = square_clicked;

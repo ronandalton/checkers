@@ -39,8 +39,8 @@ int Coord::getY() const {
 }
 
 
-// returns true if coord is a valid position (on a playable square)
-bool Coord::isValid() const {
+// returns true if coord a playable (dark color) square
+bool Coord::isValidPosition() const {
 	if (m_x >= 0 && m_x < 8 && m_y >= 0 && m_y < 8) {
 		if ((m_x + m_y) % 2 == 1) {
 			return true;
@@ -54,7 +54,7 @@ bool Coord::isValid() const {
 // converts the coord to a position
 // the coord should be a valid position
 Position Coord::getPosition() const {
-	assert(isValid());
+	assert(isValidPosition());
 	
 	return {m_y * 4 + (m_x + m_y % 2 - 1) / 2};
 }
