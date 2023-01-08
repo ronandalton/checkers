@@ -1,6 +1,6 @@
-#include "gui/mainwindow.h"
+#include "gui/main_window.h"
 
-#include "gui/renderarea.h"
+#include "gui/render_area.h"
 #include "game/game.h"
 #include "engine/engine.h"
 

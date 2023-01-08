@@ -1,5 +1,5 @@
-#ifndef RENDERAREA_H
-#define RENDERAREA_H
+#ifndef RENDER_AREA_H
+#define RENDER_AREA_H
 
 
 #include <QWidget>
@@ -80,4 +80,4 @@ private:
 };
 
 
-#endif // RENDERAREA_H
+#endif // RENDER_AREA_H

@@ -1,4 +1,4 @@
-#include "gui/renderarea.h"
+#include "gui/render_area.h"
 
 #include "game/coord.h"
 #include "game/movegen.h"

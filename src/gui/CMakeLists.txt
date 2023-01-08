@@ -1,9 +1,9 @@
 set(GUI_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/gui.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/gui.h
-	${CMAKE_CURRENT_SOURCE_DIR}/mainwindow.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/mainwindow.h
-	${CMAKE_CURRENT_SOURCE_DIR}/renderarea.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/renderarea.h
+	${CMAKE_CURRENT_SOURCE_DIR}/main_window.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/main_window.h
+	${CMAKE_CURRENT_SOURCE_DIR}/render_area.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/render_area.h
 	PARENT_SCOPE
 )
