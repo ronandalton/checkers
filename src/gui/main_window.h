@@ -2,17 +2,19 @@
 #define MAIN_WINDOW_H
 
 
-#include <QMainWindow>
+#include "gui/game_manager.h"
 
-class Game;
-class Engine;
+#include <QMainWindow>
 
 
 class MainWindow : public QMainWindow {
 	Q_OBJECT
 
 public:
-	MainWindow(Game *game, Engine *engine);
+	MainWindow();
+
+private:
+	GameManager m_game_manager;
 };
 
 
