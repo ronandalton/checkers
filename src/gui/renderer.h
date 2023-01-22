@@ -11,6 +11,7 @@ class GuiGameData;
 class Piece;
 class Coord;
 class Board;
+class Game;
 class QPainter;
 
 
@@ -31,11 +32,14 @@ private:
 	void renderLandingSquareHighlights(QPainter *painter);
 	void renderTile(QPainter *painter, const QPixmap &pixmap, Coord position);
 	QPixmap* getPiecePixmap(Piece piece);
+	bool isBoardRotated() const;
+	Coord rotateCoord(Coord coord) const;
 
 	static constexpr int BOARD_ROWS_COLS = 8;
 	static constexpr int SPRITE_SIZE = 64;
 
 	Board *m_board;
+	Game *m_game;
 	std::optional<Coord> *m_currently_selected_square;
 	std::vector<Coord> *m_landing_squares;
 

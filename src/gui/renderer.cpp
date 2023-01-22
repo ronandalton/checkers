@@ -2,6 +2,7 @@
 
 #include "gui/gui_game_data.h"
 #include "game/board.h"
+#include "game/game.h"
 #include "game/piece.h"
 
 #include <QPainter>
@@ -9,6 +10,7 @@
 
 Renderer::Renderer(GuiGameData *gui_game_data) :
 	m_board(&gui_game_data->board),
+	m_game(&gui_game_data->game),
 	m_currently_selected_square(&gui_game_data->currently_selected_square),
 	m_landing_squares(&gui_game_data->landing_squares)
 {
@@ -26,10 +28,11 @@ void Renderer::renderBoard(QPainter *painter) {
 
 
 Coord Renderer::getBoardSquareAtPosition(QPointF point) const {
-	return Coord(
-		point.x() / SPRITE_SIZE,
-		point.y() / SPRITE_SIZE
-	);
+	Coord unmapped_square(point.x() / SPRITE_SIZE, point.y() / SPRITE_SIZE);
+
+	Coord actual_square = isBoardRotated() ? rotateCoord(unmapped_square) : unmapped_square;
+
+	return actual_square;
 }
 
 
@@ -96,8 +99,10 @@ void Renderer::renderLandingSquareHighlights(QPainter *painter) {
 
 
 void Renderer::renderTile(QPainter *painter, const QPixmap &pixmap, Coord position) {
-	int pixel_pos_x = position.getX() * SPRITE_SIZE;
-	int pixel_pos_y = position.getY() * SPRITE_SIZE;
+	Coord mapped_position = isBoardRotated() ? rotateCoord(position) : position;
+
+	int pixel_pos_x = mapped_position.getX() * SPRITE_SIZE;
+	int pixel_pos_y = mapped_position.getY() * SPRITE_SIZE;
 
 	QRect source_rectangle = pixmap.rect();
 	QRect target_rectangle(pixel_pos_x, pixel_pos_y, SPRITE_SIZE, SPRITE_SIZE);
@@ -127,3 +132,14 @@ QPixmap* Renderer::getPiecePixmap(Piece piece) {
 }
 
 
+bool Renderer::isBoardRotated() const {
+	return m_game->getMatchType() != MatchType::COMPUTER_VS_HUMAN;
+}
+
+
+Coord Renderer::rotateCoord(Coord coord) const {
+	return Coord(
+		BOARD_ROWS_COLS - 1 - coord.getX(),
+		BOARD_ROWS_COLS - 1 - coord.getY()
+	);
+}
