@@ -15,7 +15,7 @@ EngineThread::EngineThread(GuiGameData *gui_game_data, QObject *parent) :
 void EngineThread::makeMovePerhaps() {
 	if (!m_game->isOver()) {
 		if (m_game->getPlayerType(m_game->getTurn()) == Player::COMPUTER) {
-			msleep(500);
+			msleep(250);
 
 			Move best_move = m_engine.findBestMove(*m_game);
 			m_game->doMove(best_move);

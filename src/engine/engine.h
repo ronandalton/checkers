@@ -17,7 +17,7 @@ private:
 
 	static int evaluate(const Bitboard &board);
 
-	static constexpr int MAX_DEPTH = 9;
+	static constexpr int MAX_DEPTH = 11;
 };
 
 
