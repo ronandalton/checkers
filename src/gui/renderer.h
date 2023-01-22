@@ -3,10 +3,11 @@
 
 
 #include <QPixmap>
+#include <vector>
+#include <optional>
 
 
-class GameManager;
-class InputHandler;
+class GuiGameData;
 class Piece;
 class Coord;
 class Board;
@@ -15,7 +16,7 @@ class QPainter;
 
 class Renderer {
 public:
-	Renderer(GameManager *game_manager, InputHandler *input_handler);
+	Renderer(GuiGameData *gui_game_data);
 
 	void renderBoard(QPainter *painter);
 	Coord getBoardSquareAtPosition(QPointF point) const;
@@ -35,7 +36,8 @@ private:
 	static constexpr int SPRITE_SIZE = 64;
 
 	Board *m_board;
-	InputHandler *m_input_handler;
+	std::optional<Coord> *m_currently_selected_square;
+	std::vector<Coord> *m_landing_squares;
 
 	QPixmap m_pixmap_dark_square;
 	QPixmap m_pixmap_light_square;

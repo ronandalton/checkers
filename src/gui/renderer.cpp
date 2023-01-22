@@ -1,16 +1,16 @@
 #include "gui/renderer.h"
 
-#include "gui/game_manager.h"
-#include "gui/input_handler.h"
+#include "gui/gui_game_data.h"
 #include "game/board.h"
 #include "game/piece.h"
 
 #include <QPainter>
 
 
-Renderer::Renderer(GameManager *game_manager, InputHandler *input_handler) :
-	m_board(&game_manager->getBoardRef()),
-	m_input_handler(input_handler)
+Renderer::Renderer(GuiGameData *gui_game_data) :
+	m_board(&gui_game_data->board),
+	m_currently_selected_square(&gui_game_data->currently_selected_square),
+	m_landing_squares(&gui_game_data->landing_squares)
 {
 	loadSprites();
 }
@@ -82,16 +82,14 @@ void Renderer::renderBoardHighlights(QPainter *painter) {
 
 
 void Renderer::renderCurrentlySelectedPieceHighlight(QPainter *painter) {
-	std::optional<Coord> currently_selected_square = m_input_handler->getCurrentlySelectedSquare();
-	if (currently_selected_square) {
-		renderTile(painter, m_pixmap_selected_piece_highlight, *currently_selected_square);
+	if (m_currently_selected_square->has_value()) {
+		renderTile(painter, m_pixmap_selected_piece_highlight, m_currently_selected_square->value());
 	}
 }
 
 
 void Renderer::renderLandingSquareHighlights(QPainter *painter) {
-	const std::vector<Coord> &landing_squares = m_input_handler->getLandingSquares();
-	for (Coord landing_square : landing_squares) {
+	for (Coord landing_square : *m_landing_squares) {
 		renderTile(painter, m_pixmap_landing_square_highlight, landing_square);
 	}
 }

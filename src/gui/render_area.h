@@ -17,12 +17,17 @@ class RenderArea : public QWidget {
 public:
 	RenderArea(QWidget *parent, GameManager *game_manager);
 
+	InputHandler* getInputHandlerPtr();
+
 protected:
 	void paintEvent(QPaintEvent *event) override;
 	void mousePressEvent(QMouseEvent *event) override;
 	void mouseReleaseEvent(QMouseEvent *event) override;
 	void mouseMoveEvent(QMouseEvent *event) override;
 	void mouseDoubleClickEvent(QMouseEvent *event) override;
+
+private slots:
+	void repaintProxy();
 
 private:
 	Renderer m_renderer;

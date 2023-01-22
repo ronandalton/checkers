@@ -1,19 +1,22 @@
 #include "gui/input_handler.h"
 
-#include "gui/game_manager.h"
+#include "gui/gui_game_data.h"
+#include "game/game.h"
+#include "game/board.h"
 #include "gui/renderer.h"
-#include "gui/render_area.h"
+#include "game/player.h"
 
 #include <QMouseEvent>
 #include <algorithm> // for std::find
 #include <cassert>
 
 
-InputHandler::InputHandler(GameManager *game_manager, Renderer *renderer, RenderArea *render_area) :
-	m_game(&game_manager->getGameRef()),
-	m_board(&game_manager->getBoardRef()),
-	m_renderer(renderer),
-	m_render_area(render_area)
+InputHandler::InputHandler(GuiGameData *gui_game_data, Renderer *renderer) :
+	m_game(&gui_game_data->game),
+	m_board(&gui_game_data->board),
+	m_currently_selected_square(&gui_game_data->currently_selected_square),
+	m_landing_squares(&gui_game_data->landing_squares),
+	m_renderer(renderer)
 {
 	resetMovesAvailableSubset();
 }
@@ -23,6 +26,7 @@ void InputHandler::handleMouseEvent(QMouseEvent *event) {
 	event->accept();
 
 	m_state_changed = false;
+	m_human_move_made = false;
 
 	if (event->type() == QEvent::Type::MouseButtonPress) {
 		Coord square_clicked = m_renderer->getBoardSquareAtPosition(event->position());
@@ -30,7 +34,11 @@ void InputHandler::handleMouseEvent(QMouseEvent *event) {
 	}
 
 	if (m_state_changed) {
-		m_render_area->repaint();
+		emit repaintNeeded();
+	}
+
+	if (m_human_move_made) {
+		emit humanMoveMade();
 	}
 }
 
@@ -41,16 +49,6 @@ void InputHandler::resetState() {
 	} else {
 		clearSelection();
 	}
-}
-
-
-std::optional<Coord> InputHandler::getCurrentlySelectedSquare() const {
-	return m_currently_selected_square;
-}
-
-
-const std::vector<Coord>& InputHandler::getLandingSquares() const {
-	return m_landing_squares;
 }
 
 
@@ -67,13 +65,13 @@ void InputHandler::handleSquareClicked(Coord square_clicked) {
 			handleSquareClickedWhenNoMoveInProgress(square_clicked);
 		}
 
-		m_state_changed = true; // FIXME: not all clicks lead to a state change
+		m_state_changed = true; // FIXME/TODO: not all clicks lead to a state change
 	}
 }
 
 
 bool InputHandler::currentlyAcceptingInput() const {
-	return !m_game->isOver();
+	return !m_game->isOver() && m_game->getPlayerType(m_game->getTurn()) == Player::HUMAN;
 }
 
 
@@ -98,14 +96,14 @@ void InputHandler::handleSquareClickedWhenMoveAlreadyInProgress(Coord square_cli
 
 
 bool InputHandler::isCurrentlySelectedSquare(Coord square_clicked) const {
-	return m_currently_selected_square
-		&& *m_currently_selected_square == square_clicked;
+	return m_currently_selected_square->has_value()
+		&& m_currently_selected_square->value() == square_clicked;
 }
 
 
 bool InputHandler::isALandingSquare(Coord square_clicked) const {
-	return std::find(m_landing_squares.begin(), m_landing_squares.end(),
-		square_clicked) != m_landing_squares.end();
+	return std::find(m_landing_squares->begin(), m_landing_squares->end(),
+		square_clicked) != m_landing_squares->end();
 }
 
 
@@ -121,7 +119,7 @@ bool InputHandler::squareHoldsAPieceThatBelongsToCurrentPlayer(Coord square_clic
 
 
 void InputHandler::clearSelection() {
-	m_currently_selected_square.reset();
+	m_currently_selected_square->reset();
 	resetMovesAvailableSubset();
 	updateLandingSquares();
 }
@@ -132,7 +130,7 @@ void InputHandler::selectSquare(Coord square_clicked) {
 	assert(square_clicked.isValidPosition());
 
 	resetMovesAvailableSubset();
-	m_currently_selected_square = square_clicked;
+	*m_currently_selected_square = square_clicked;
 	m_num_hops_made_in_current_move = 0;
 	restrictMovesAvailableSubset();
 	updateLandingSquares();
@@ -145,9 +143,9 @@ void InputHandler::resetMovesAvailableSubset() {
 
 
 void InputHandler::restrictMovesAvailableSubset() {
-	assert(m_currently_selected_square);
+	assert(m_currently_selected_square->has_value());
 
-	Position current_position = m_currently_selected_square->getPosition();
+	Position current_position = m_currently_selected_square->value().getPosition();
 
 	std::vector<Move> new_moves_available_subset;
 
@@ -166,10 +164,10 @@ void InputHandler::restrictMovesAvailableSubset() {
 
 
 void InputHandler::updateLandingSquares() {
-	m_landing_squares.clear();
+	m_landing_squares->clear();
 
-	if (m_currently_selected_square) {
-		Position currently_selected_position = m_currently_selected_square->getPosition();
+	if (m_currently_selected_square->has_value()) {
+		Position currently_selected_position = m_currently_selected_square->value().getPosition();
 
 		for (const Move &move : m_moves_available_subset) {
 			int num_hops_in_move = move.getPositions().size() - 1;
@@ -186,11 +184,11 @@ void InputHandler::updateLandingSquares() {
 
 void InputHandler::addLandingSquare(Coord landing_square) {
 	bool landing_square_already_in_list =
-		std::find(m_landing_squares.begin(), m_landing_squares.end(),
-		landing_square) != m_landing_squares.end();
+		std::find(m_landing_squares->begin(), m_landing_squares->end(),
+		landing_square) != m_landing_squares->end();
 
 	if (!landing_square_already_in_list) {
-		m_landing_squares.push_back(landing_square);
+		m_landing_squares->push_back(landing_square);
 	}
 }
 
@@ -214,8 +212,8 @@ void InputHandler::startMove() {
 
 
 void InputHandler::makeHop(Coord landing_square) {
-	m_board->movePiece(*m_currently_selected_square, landing_square);
-	m_currently_selected_square = landing_square;
+	m_board->movePiece(m_currently_selected_square->value(), landing_square);
+	m_currently_selected_square->value() = landing_square;
 	m_num_hops_made_in_current_move++;
 	restrictMovesAvailableSubset();
 	updateLandingSquares();
@@ -241,6 +239,8 @@ void InputHandler::endMove() {
 	clearSelection();
 
 	assert(*m_board == m_game->getBoard());
+
+	m_human_move_made = true;
 }
 
 

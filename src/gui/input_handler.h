@@ -5,28 +5,31 @@
 #include "game/move.h"
 #include "game/coord.h"
 
+#include <QObject>
 #include <vector>
 #include <optional>
 
 
-class GameManager;
+class GuiGameData;
 class Game;
 class Board;
 class Renderer;
-class RenderArea;
 class QMouseEvent;
 
 
-class InputHandler {
+class InputHandler : public QObject {
+	Q_OBJECT
+
 public:
-	InputHandler(GameManager *game_manager, Renderer *renderer, RenderArea *render_area);
+	InputHandler(GuiGameData *gui_game_data, Renderer *renderer);
 
 	void handleMouseEvent(QMouseEvent *event);
 	void resetState();
-
-	std::optional<Coord> getCurrentlySelectedSquare() const;
-	const std::vector<Coord>& getLandingSquares() const;
 	bool isMoveInProgress() const;
+
+signals:
+	void repaintNeeded();
+	void humanMoveMade();
 
 private:
 	void handleSquareClicked(Coord square_clicked);
@@ -51,15 +54,16 @@ private:
 
 	Game *m_game;
 	Board *m_board;
+	std::optional<Coord> *m_currently_selected_square;
+	std::vector<Coord> *m_landing_squares;
 	Renderer *m_renderer;
-	RenderArea *m_render_area;
 
-	std::optional<Coord> m_currently_selected_square;
 	std::vector<Move> m_moves_available_subset;
-	std::vector<Coord> m_landing_squares;
 	bool m_is_move_in_progress = false;
 	int m_num_hops_made_in_current_move = 0;
+
 	bool m_state_changed = false;
+	bool m_human_move_made = false;
 };
 
 

@@ -2,39 +2,32 @@
 #define GAME_MANAGER_H
 
 
-#include "game/game.h"
-#include "engine/engine.h"
-#include "game/board.h"
+#include "gui/gui_game_data.h"
+#include "gui/engine_thread.h"
 
+#include <QObject>
 #include <QThread>
 
 
-class GameManager {
-public:
-	void startGame();
+class InputHandler;
 
-	Game& getGameRef();
-	Board& getBoardRef();
+
+class GameManager : public QObject {
+	Q_OBJECT
+
+public:
+	GameManager();
+
+	void startGame();
+	GuiGameData* getGuiGameDataPtr();
+	EngineThread* getEngineThreadPtr();
+
+signals:
+	void gameStarted();
 
 private:
-	class RunnerThread : public QThread {
-		Q_OBJECT
-
-	public:
-		void run() override;
-
-	public signals:
-		void gameOver();
-	};
-
-	Move getMoveFromHuman();
-	Move getMoveFromEngine();
-
-	RunnerThread m_runner_thread;
-
-	Game m_game;
-	Engine m_engine;
-	Board m_board;
+	GuiGameData m_gui_game_data;
+	EngineThread m_engine_thread;
 };
 
 

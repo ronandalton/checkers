@@ -1,9 +1,18 @@
 set(GUI_SOURCES
+	${CMAKE_CURRENT_SOURCE_DIR}/engine_thread.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/engine_thread.h
+	${CMAKE_CURRENT_SOURCE_DIR}/game_manager.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/game_manager.h
 	${CMAKE_CURRENT_SOURCE_DIR}/gui.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/gui_game_data.h
 	${CMAKE_CURRENT_SOURCE_DIR}/gui.h
+	${CMAKE_CURRENT_SOURCE_DIR}/input_handler.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/input_handler.h
 	${CMAKE_CURRENT_SOURCE_DIR}/main_window.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/main_window.h
 	${CMAKE_CURRENT_SOURCE_DIR}/render_area.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/render_area.h
+	${CMAKE_CURRENT_SOURCE_DIR}/renderer.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/renderer.h
 	PARENT_SCOPE
 )
