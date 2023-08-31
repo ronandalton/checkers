@@ -3,3 +3,6 @@
 
 # Files used for autocomplete in text editors
 compile_commands.json
+
+# Cache files
+.cache/
