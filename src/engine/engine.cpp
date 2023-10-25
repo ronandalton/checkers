@@ -90,6 +90,10 @@ Move Engine::findBestMove(const Game &game) {
 
 // best_move is optional - used for root call to this function
 int Engine::negamax(const Bitboard &board, bool is_whites_turn, int depth, int alpha, int beta, CompactMove *best_move) {
+	if (best_move != nullptr) {
+		*best_move = CompactMove();
+	}
+
 	if (depth == 0) {
 		return evaluate(board) * (is_whites_turn ? -1 : 1);
 	}
@@ -100,6 +104,10 @@ int Engine::negamax(const Bitboard &board, bool is_whites_turn, int depth, int a
 	int moves_found = generateMoves(board, is_whites_turn, next_positions, best_move != nullptr ? moves_available : nullptr);
 
 	int value = -INT_MAX;
+
+	if (best_move != nullptr && moves_found > 0) {
+		*best_move = moves_available[0];
+	}
 
 	for (int i = 0; i < moves_found; i++) {
 		int new_value = -negamax(next_positions[i], !is_whites_turn, depth - 1, -beta, -alpha, nullptr);
