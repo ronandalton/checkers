@@ -1,6 +1,10 @@
 set(GUI_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/engine_thread.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/engine_thread.h
+	${CMAKE_CURRENT_SOURCE_DIR}/engine_thread_controller.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/engine_thread_controller.h
+	${CMAKE_CURRENT_SOURCE_DIR}/engine_thread_worker.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/engine_thread_worker.h
 	${CMAKE_CURRENT_SOURCE_DIR}/game_manager.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/game_manager.h
 	${CMAKE_CURRENT_SOURCE_DIR}/gui.cpp

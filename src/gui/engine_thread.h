@@ -2,6 +2,7 @@
 #define ENGINE_THREAD_H
 
 
+#include "gui/engine_thread_controller.h"
 #include "engine/engine.h"
 
 #include <QThread>
@@ -27,11 +28,15 @@ signals:
 protected:
 	//void run() override; // not used to event loop is started by default
 
+private slots:
+	void makeMove(const Move &move);
+
 private:
 	Game *m_game;
 	Board *m_board;
 
 	Engine m_engine;
+	EngineThreadController m_engine_thread_controller;
 };
 
 
